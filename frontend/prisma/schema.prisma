@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+// 1. ユーザーモデル
+// ユーザー認証と基本情報を管理します。
+model User {
+  id        String   @id @default(uuid())
+  clerkUserId String @unique
+  email     String   @unique
+  name      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション：一人のユーザーは複数の企業情報を持つ
+  companies Company[]
+}
+
+
+// 2. 企業モデル
+// 全ての情報のハブとなります。ユーザーに紐づきます。
+model Company {
+  id          String    @id @default(cuid())
+  name        String    // 企業名
+  url         String?   // 企業URL
+  note        String?   // 企業に関する自由なメモ
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // リレーション：どのユーザーが登録した企業か
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // リレーション：一つの企業は複数の選考を持つ
+  selections  Selection[]
+}
+
+// 3. 選考カードモデル
+// インターンや本選考など、個別の選考プロセスを管理します。
+model Selection {
+  id          String         @id @default(cuid())
+  type        SelectionType  // 選考タイプ（インターン or 本選考）
+  status      Status         @default(APPLIED) // カンバンボードのレーンに対応するステータス
+  note        String?        // この選考に関するメモ
+  esText      String?        // この選考に提出したESのテキスト
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // リレーション：どの企業に紐づく選考か
+  companyId   String
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // リレーション：一つの選考は複数のスケジュールを持つ
+  schedules   Schedule[]
+}
+
+// 4. スケジュールモデル
+// ES締切や面接日など、日付に関わる情報を管理します。
+model Schedule {
+  id          String        @id @default(cuid())
+  title       String        // 例：「一次面接」「ES提出締切」
+  date        DateTime      // 予定の日時
+  isConfirmed Boolean       @default(true) // 確定 or 未確定フラグ
+  location    String?       // 場所やオンラインURL
+  note        String?       // スケジュールに関するメモ
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // リレーション：どの選考に紐づくスケジュールか
+  selectionId String
+  selection   Selection     @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+}
+
+
+// Enum: 選考タイプを定義
+enum SelectionType {
+  INTERNSHIP // インターンシップ
+  FULLTIME   // 本選考
+}
+
+// Enum: カンバンボードのステータスを定義
+enum Status {
+  INTERESTED  // 興味あり
+  APPLIED     // 応募済み・書類選考中
+  WEBTEST     // Webテスト
+  INTERVIEW_1 // 一次面接
+  INTERVIEW_2 // 二次面接
+  INTERVIEW_3 // 三次面接以降
+  FINAL       // 最終面接
+  OFFERED     // 内定
+  REJECTED    // お祈り
+}
