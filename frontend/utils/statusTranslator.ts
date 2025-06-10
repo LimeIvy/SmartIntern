@@ -1,9 +1,16 @@
-import { Status } from "@prisma/client";
+import { SelectionType, Status } from "@prisma/client";
 
-// 英語のenumと日本語表示のマッピングオブジェクト
+// 選考タイプの英語と日本語のマッピングオブジェクト
+export const selectionTypeToJapanese = {
+  [SelectionType.INTERNSHIP]: "インターンシップ",
+  [SelectionType.FULLTIME]: "本選考",
+};
+
+// ステータスの英語と日本語のマッピングオブジェクト
 export const statusToJapanese = {
   [Status.INTERESTED]: "興味あり",
-  [Status.APPLIED]: "応募済み・書類選考中",
+  [Status.APPLIED]: "応募済み",
+  [Status.ES_SUBMITTED]: "ES提出済み",
   [Status.WEBTEST]: "Webテスト",
   [Status.INTERVIEW_1]: "一次面接",
   [Status.INTERVIEW_2]: "二次面接",
@@ -14,6 +21,9 @@ export const statusToJapanese = {
 };
 
 // 安全に変換するための関数
+export function translateSelectionType(type: SelectionType): string {
+  return selectionTypeToJapanese[type] || "不明な選考タイプ";
+}
 export function translateStatus(status: Status): string {
   return statusToJapanese[status] || "不明なステータス";
 }

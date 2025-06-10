@@ -103,7 +103,8 @@ enum SelectionType {
 // Enum: カンバンボードのステータスを定義
 enum Status {
   INTERESTED  // 興味あり
-  APPLIED     // 応募済み・書類選考中
+  APPLIED     // 応募済み
+  ES_SUBMITTED // ES提出済み
   WEBTEST     // Webテスト
   INTERVIEW_1 // 一次面接
   INTERVIEW_2 // 二次面接

@@ -1,12 +1,12 @@
-import { Hono } from "hono"
-import { handle } from "hono/vercel"
+import { Hono } from "hono";
+import { handle } from "hono/vercel";
 
-import company from "./company"
+import company from "./company";
 
-const app = new Hono().basePath("/api")
-const route = app.route("/company", company)
+const app = new Hono().basePath("/api");
+const route = app.route("/company", company);
 
-export type AppType = typeof route
+export type AppType = typeof route;
 
-export const GET = handle(route)
-export const POST = handle(route)
+export const GET = handle(route);
+export const POST = handle(route);

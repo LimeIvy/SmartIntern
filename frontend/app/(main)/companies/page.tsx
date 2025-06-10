@@ -13,23 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Building2,
-  Plus,
-  Search,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Eye,
-  Loader2,
-} from "lucide-react";
+import { Building2, Plus, Search, MoreVertical, Trash2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
-type CompanyFromApi = InferResponseType<
-  (typeof client.api.company)["$get"],
-  200
->[number];
+type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
 
 type Selection = CompanyFromApi["selections"][number];
 
@@ -40,6 +30,27 @@ const getStatusColor = (status: string) => {
   if (status.includes("INTERVIEW")) return "bg-blue-100 text-blue-800";
   return "bg-yellow-100 text-yellow-800";
 };
+
+const CompanyCardSkeleton = () => (
+  <Card>
+    <CardContent className="p-6">
+      <div className="mb-4 flex items-start justify-between">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-12 w-12 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-[200px]" />
+          </div>
+        </div>
+      </div>
+      <div className="mb-4 space-y-2">
+        <Skeleton className="h-4 w-full" />
+      </div>
+      <div className="flex items-center justify-end">
+        <Skeleton className="h-4 w-[100px]" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 export default function CompaniesList() {
   const router = useRouter();
@@ -67,7 +78,7 @@ export default function CompaniesList() {
     fetchCompanies();
   }, []);
 
-  const filterOptions = ["すべて", "選考中", "内定", "お祈り", "未応募"];
+  const filterOptions = ["すべて", "選考中", "内定", "お祈り"];
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -82,8 +93,6 @@ export default function CompaniesList() {
           return selection.status.includes("OFFERED");
         case "お祈り":
           return selection.status.includes("REJECTED");
-        case "未応募":
-          return company.selections.length === 0;
         default:
           return true;
       }
@@ -93,6 +102,17 @@ export default function CompaniesList() {
       matchesSearch && (filterStatus === "未応募" ? company.selections.length === 0 : hasStatus)
     );
   });
+
+  const handleDelete = async (companyId: string) => {
+    try {
+      await client.api.company[":id"].$delete({
+        param: { id: companyId },
+      });
+      setCompanies(companies.filter((company) => company.id !== companyId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "企業の削除に失敗しました。");
+    }
+  };
 
   const CompanyCard = ({ company }: { company: CompanyFromApi }) => {
     const router = useRouter();
@@ -112,7 +132,6 @@ export default function CompaniesList() {
                 <h3 className="mb-1 truncate text-lg font-semibold text-gray-900">
                   {company.name}
                 </h3>
-                
               </div>
             </div>
 
@@ -123,15 +142,22 @@ export default function CompaniesList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/companies/${company.id}`)}}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/companies/${company.id}`);
+                  }}
+                >
                   <Eye className="mr-2 h-4 w-4" />
                   詳細を見る
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); /* 編集ページへの遷移処理 */ }}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  編集
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); /* 削除処理 */ }}>
+                <DropdownMenuItem
+                  className="text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(company.id);
+                  }}
+                >
                   <Trash2 className="mr-2 h-4 w-4" />
                   削除
                 </DropdownMenuItem>
@@ -146,8 +172,10 @@ export default function CompaniesList() {
               <div className="flex flex-wrap gap-2">
                 {company.selections.map((selection: Selection, index: number) => (
                   <div key={index} className="flex items-center gap-2 text-xs">
-                    <span className="text-gray-600">{selection.type}:</span>
-                    <Badge className={getStatusColor(selection.status)}>{selection.status}</Badge>
+                    <span className="text-gray-600">{translateSelectionType(selection.type)}:</span>
+                    <Badge className={getStatusColor(selection.status)}>
+                      {translateStatus(selection.status)}
+                    </Badge>
                   </div>
                 ))}
               </div>
@@ -172,8 +200,43 @@ export default function CompaniesList() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen flex-1 items-center justify-center bg-gray-50 p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="flex min-h-screen bg-gray-50">
+        <div className="flex-1 p-8">
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h2 className="mb-2 text-3xl font-bold text-gray-900">企業一覧</h2>
+              <p className="text-gray-600">登録した企業と選考状況を管理できます</p>
+            </div>
+            <Button className="bg-blue-600 hover:bg-blue-700" disabled>
+              <Plus className="mr-2 h-4 w-4" />
+              新しい企業を登録
+            </Button>
+          </div>
+
+          <div className="mb-6 flex gap-4">
+            <div className="relative max-w-md flex-1">
+              <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+              <Input placeholder="企業名で検索..." className="pl-10" disabled value="" />
+            </div>
+
+            <div className="flex rounded-lg bg-gray-100 p-1">
+              {filterOptions.map((option) => (
+                <button
+                  key={option}
+                  disabled
+                  className="rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap text-gray-600 transition-colors"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <CompanyCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -276,8 +339,8 @@ export default function CompaniesList() {
         {companies.length > 0 && (
           <div className="mt-8 text-sm text-gray-600">
             {searchQuery || filterStatus !== "すべて"
-              ? `${filteredCompanies.length}件の企業が見つかりました`
-              : `合計 ${companies.length}社を管理中`}
+              ? `合計 ${filteredCompanies.length}社を登録中`
+              : `合計 ${companies.length}社を登録中`}
           </div>
         )}
       </div>
