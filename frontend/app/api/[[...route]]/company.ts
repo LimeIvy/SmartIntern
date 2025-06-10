@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addCompanySchema } from "@/app/schemas/add_campany_schema";
+import { addCompanySchema } from "@/app/schemas/add_company_schema";
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -27,28 +27,54 @@ const app = new Hono()
     return c.json(companies);
   })
 
-  .post("/", zValidator("form", addCompanySchema), async (c) => {
-    const data = c.req.valid("form");
+  .get("/:id", async (c) => {
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const { id } = c.req.param();
+    const company = await db.company.findUnique({
+      where: { id, userId: user.id },
+      include: {
+        urls: true,
+        selections: true,
+      },
+    });
+
+    if (!company) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+
+    return c.json(company);
+  })
+
+  .post("/", zValidator("json", addCompanySchema), async (c) => {
+    const data = c.req.valid("json");
     const user = await checkUser();
     if (!user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const company = await db.company.create({
-      data: {
-        name: data.name,
-        urls: {
-          create: {
-            type: "official",
-            url: data.url,
-          },
+    const newCompany = await db.$transaction(async (tx) => {
+      const company = await tx.company.create({
+        data: {
+          name: data.name,
+          note: data.note,
+          userId: user.id,
         },
-        note: data.note,
-        userId: user.id,
-      },
+      });
+
+      await tx.companyUrl.createMany({
+        data: data.urls.map((url) => ({
+          ...url,
+          companyId: company.id,
+        })),
+      });
+
+      return company;
     });
 
-    return c.json(company);
+    return c.json(newCompany);
   })
 
   .delete("/:id", async (c) => {

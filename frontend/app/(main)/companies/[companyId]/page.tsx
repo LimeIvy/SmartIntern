@@ -1,16 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Flag,
   Building2,
   Plus,
-  Clock,
   ExternalLink,
   ChevronRight,
   Edit,
@@ -22,52 +30,75 @@ import {
   Save,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
+import { InferResponseType } from "hono";
+import { client } from "@/lib/hono";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  translateSelectionType,
+  translateStatus,
+} from "@/utils/statusTranslator";
+
+type CompanyResponseType = InferResponseType<
+  (typeof client.api.company)[":id"]["$get"],
+  200
+>;
+
+interface EsStockItem {
+  id: string;
+  title: string;
+  content: string;
+}
+
+const getStatusColor = (status: string) => {
+  if (status.includes("OFFERED")) return "bg-green-100 text-green-800";
+  if (status.includes("REJECTED")) return "bg-gray-100 text-gray-800";
+  if (status.includes("INTERVIEW")) return "bg-blue-100 text-blue-800";
+  return "bg-yellow-100 text-yellow-800";
+};
 
 export default function CompanyDetail() {
   const router = useRouter();
   const { companyId } = useParams();
-  const [companyMemo, setCompanyMemo] = useState(
-    "説明会で聞いた内容：\n- 新規事業に力を入れている\n- リモートワーク推奨\n- 若手の裁量が大きい"
-  );
+  const [company, setCompany] = useState<CompanyResponseType | null>(null);
+  const [companyMemo, setCompanyMemo] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
-  const esStock = [
-    {
-      id: "gakuchika",
-      title: "ガクチカ",
-      content:
-        "大学時代に最も力を入れたことは、学園祭実行委員会での企画運営です。私はイベント企画チームのリーダーとして、来場者数を前年比20%増加させることを目標に掲げました...",
-    },
-    {
-      id: "self-pr",
-      title: "自己PR",
-      content:
-        "私の強みは「課題解決力」です。問題を多角的に分析し、創造的な解決策を見つけることが得意です。この強みを発揮したエピソードとして...",
-    },
-    {
-      id: "motivation",
-      title: "志望動機",
-      content:
-        "貴社を志望する理由は、「テクノロジーで社会課題を解決する」という企業理念に強く共感したからです。特に、貴社が手がけている...",
-    },
-  ];
+  useEffect(() => {
+    if (typeof companyId !== "string") {
+      return;
+    }
+    const fetchCompany = async () => {
+      try {
+        const res = await client.api.company[":id"].$get({
+          param: { id: companyId },
+        });
 
-  const selections = [
-    {
-      id: "1",
-      name: "2025年 夏期インターンシップ",
-      status: "一次面接",
-      statusColor: "bg-blue-100 text-blue-800",
-      nextSchedule: "次の予定: 6/15 Webテスト",
-    },
-    {
-      id: "2",
-      name: "2026年 新卒採用",
-      status: "書類選考中",
-      statusColor: "bg-yellow-100 text-yellow-800",
-      nextSchedule: "結果待ち",
-    },
-  ];
+        if (!res.ok) {
+          throw new Error("企業の取得に失敗しました。");
+        }
+        const data = await res.json();
+        if (data) {
+          setCompany(data);
+          setCompanyMemo(data.note || "");
+        } else {
+          throw new Error("企業データが見つかりません。");
+        }
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "不明なエラーが発生しました。"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCompany();
+  }, [companyId]);
+
+  const handleSaveMemo = async () => {
+    // メモ保存処理を書く場所
+  };
 
   const toggleAccordion = (id: string) => {
     setOpenAccordions((prev) =>
@@ -75,10 +106,28 @@ export default function CompanyDetail() {
     );
   };
 
+  if (isLoading) {
+    return (
+      <div>
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
+
+  if (!company) {
+    return <div>企業が見つかりません。</div>;
+  }
+
+  const esStock: EsStockItem[] = []; // 実際にはAPIなどで取得する
+  const primaryUrl = company.urls?.[0]?.url ?? null;
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* メインコンテンツエリア */}
-      <div className="flex-1 p-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto w-full max-w-7xl p-8">
         {/* ヘッダー */}
         <div className="mb-8 flex items-start justify-between">
           <div className="flex items-center gap-4">
@@ -86,16 +135,20 @@ export default function CompanyDetail() {
               <Building2 className="h-8 w-8 text-gray-500" />
             </div>
             <div>
-              <h2 className="mb-2 text-3xl font-bold text-gray-900">株式会社A</h2>
-              <a
-                href="https://example.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
-              >
-                https://example.com
-                <ExternalLink className="h-4 w-4" />
-              </a>
+              <h2 className="mb-2 text-3xl font-bold text-gray-900">
+                {company.name}
+              </h2>
+              {primaryUrl && (
+                <a
+                  href={primaryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                >
+                  {primaryUrl}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
@@ -107,17 +160,21 @@ export default function CompanyDetail() {
               <Edit className="mr-2 h-4 w-4" />
               編集
             </Button>
-            <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700"
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               削除
             </Button>
           </div>
         </div>
 
-        {/* カードグリッド */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* 左列 */}
-          <div className="space-y-6">
+        {/* メイン2カラムレイアウト */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* 左列（2/3幅） */}
+          <div className="lg:col-span-2 space-y-6">
             {/* 企業メモ */}
             <Card className="shadow-sm">
               <CardHeader>
@@ -133,7 +190,11 @@ export default function CompanyDetail() {
                   placeholder="説明会やOB訪問で得た情報を記録しましょう..."
                   className="mb-4 min-h-[200px]"
                 />
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSaveMemo}
+                >
                   <Save className="mr-2 h-4 w-4" />
                   保存
                 </Button>
@@ -156,10 +217,14 @@ export default function CompanyDetail() {
                         onClick={() => toggleAccordion(item.id)}
                         className="flex w-full items-center justify-between rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                       >
-                        <span className="font-medium text-gray-900">{item.title}</span>
+                        <span className="font-medium text-gray-900">
+                          {item.title}
+                        </span>
                         <ChevronDown
                           className={`h-4 w-4 text-gray-500 transition-transform ${
-                            openAccordions.includes(item.id) ? "rotate-180" : ""
+                            openAccordions.includes(item.id)
+                              ? "rotate-180"
+                              : ""
                           }`}
                         />
                       </CollapsibleTrigger>
@@ -191,9 +256,8 @@ export default function CompanyDetail() {
             </Card>
           </div>
 
-          {/* 右列 */}
-          <div>
-            {/* この企業の選考一覧 */}
+          {/* 右列（1/3幅） */}
+          <div className="space-y-6">
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-lg">
@@ -209,21 +273,21 @@ export default function CompanyDetail() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {selections.map((selection) => (
+                  {(company.selections ?? []).map((selection) => (
                     <div
                       key={selection.id}
                       className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:border-gray-300"
                     >
                       <div className="mb-2 flex items-start justify-between">
-                        <h4 className="font-medium text-gray-900">{selection.name}</h4>
+                        <h4 className="font-medium text-gray-900">
+                          {translateSelectionType(selection.type)}
+                        </h4>
                         <ChevronRight className="mt-1 h-4 w-4 text-gray-400" />
                       </div>
                       <div className="mb-2 flex items-center gap-3">
-                        <Badge className={selection.statusColor}>{selection.status}</Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="h-4 w-4" />
-                        {selection.nextSchedule}
+                        <Badge className={getStatusColor(selection.status)}>
+                          {translateStatus(selection.status)}
+                        </Badge>
                       </div>
                     </div>
                   ))}
