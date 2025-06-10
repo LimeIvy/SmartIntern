@@ -1,6 +1,6 @@
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { UniqueIdentifier } from '@dnd-kit/core';
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { UniqueIdentifier } from "@dnd-kit/core";
 
 type SortableProps = {
   children: React.ReactNode;
@@ -8,14 +8,8 @@ type SortableProps = {
 };
 
 export function Sortable({ children, id }: SortableProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({
-    id: id
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+    id: id,
   });
 
   const style = {

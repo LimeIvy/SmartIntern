@@ -45,23 +45,17 @@ export const sampleProjectData: ProjectDetail = {
     {
       id: "L5",
       title: "2次面接",
-      tickets: [
-        { id: "T12", title: "Ticket 12", description: "This is ticket 12" },
-      ],
+      tickets: [{ id: "T12", title: "Ticket 12", description: "This is ticket 12" }],
     },
     {
       id: "L6",
       title: "内定",
-      tickets: [
-        { id: "T13", title: "Ticket 13", description: "This is ticket 13" },
-      ],
+      tickets: [{ id: "T13", title: "Ticket 13", description: "This is ticket 13" }],
     },
     {
       id: "L7",
       title: "お祈り",
-      tickets: [
-        { id: "T13", title: "Ticket 13", description: "This is ticket 13" },
-      ],
+      tickets: [{ id: "T13", title: "Ticket 13", description: "This is ticket 13" }],
     },
   ],
 };

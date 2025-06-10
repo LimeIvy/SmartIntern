@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from 'react';
-import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { DndContext, DragEndEvent, UniqueIdentifier, DragStartEvent, DragOverEvent, Active, Over, CollisionDetection, closestCorners, DragOverlay } from '@dnd-kit/core';
+import { useState } from "react";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  DragEndEvent,
+  UniqueIdentifier,
+  DragStartEvent,
+  DragOverEvent,
+  Active,
+  Over,
+  CollisionDetection,
+  closestCorners,
+  DragOverlay,
+} from "@dnd-kit/core";
 
-import { Sortable } from '@/components/dnd-kit/sortable';
-import { SortableItem } from '@/components/dnd-kit/sortableItem';
-import Droppable from '@/components/dnd-kit/droppable';
-import type { ProjectDetail } from '@/types/project';
+import { Sortable } from "@/components/dnd-kit/sortable";
+import { SortableItem } from "@/components/dnd-kit/sortableItem";
+import Droppable from "@/components/dnd-kit/droppable";
+import type { ProjectDetail } from "@/types/project";
 
-import { sampleProjectData } from '@/data/sampleProject';
+import { sampleProjectData } from "@/data/sampleProject";
 
 // getData関数
 export function getData(event: { active: Active; over: Over | null }) {
@@ -29,7 +40,7 @@ export function getData(event: { active: Active; over: Over | null }) {
     containerId: over.id,
     index: NaN, // 空のリストへの移動の場合、indexはNaN
     items: NaN, // 空のリストへの移動の場合、itemsはNaN
-  }
+  };
 
   // データを返す
   return {
@@ -40,16 +51,16 @@ export function getData(event: { active: Active; over: Over | null }) {
 
 export default function Kanban() {
   const [projectData, setProjectData] = useState<ProjectDetail>(sampleProjectData); // プロジェクトデータを管理するstate
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null); // ドラッグ中のアイテムIDを管理するstate 
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null); // ドラッグ中のアイテムIDを管理するstate
 
   // 衝突検出アルゴリズム
   const customClosestCorners: CollisionDetection = (args) => {
     const cornerCollisions = closestCorners(args);
 
     // 一番近いリストのコンテナを取得
-    const listIds = new Set(projectData.lists.map(list => list.id));
+    const listIds = new Set(projectData.lists.map((list) => list.id));
     const closestContainer = cornerCollisions.find((c) => {
-      return listIds.has(c.id.toString())
+      return listIds.has(c.id.toString());
     });
     if (!closestContainer) return cornerCollisions;
 
@@ -85,21 +96,25 @@ export default function Kanban() {
 
     if (from.containerId === to.containerId) return; // コンテナ内移動の場合はリターン
 
-    const fromList = projectData.lists.find(list => list.id == from.containerId); // 移動元リストを取得
-    const toList = projectData.lists.find(list => list.id == to.containerId); // 移動先リストを取得
+    const fromList = projectData.lists.find((list) => list.id == from.containerId); // 移動元リストを取得
+    const toList = projectData.lists.find((list) => list.id == to.containerId); // 移動先リストを取得
     if (!fromList || !toList) return;
 
     // 移動するチケットを取得
-    const moveTicket = fromList.tickets.find(ticket => ticket.id === from.items[from.index]);
+    const moveTicket = fromList.tickets.find((ticket) => ticket.id === from.items[from.index]);
     if (!moveTicket) return;
 
     // 移動元リストからチケットを削除
     const newFromTickets = fromList.tickets.filter((ticket) => ticket.id !== moveTicket.id);
     // 移動先リストの適切な位置にチケットを挿入
-    const newToTickets = [...toList.tickets.slice(0, to.index), moveTicket, ...toList.tickets.slice(to.index)];
+    const newToTickets = [
+      ...toList.tickets.slice(0, to.index),
+      moveTicket,
+      ...toList.tickets.slice(to.index),
+    ];
 
     // 新しいリストデータを作成し、stateを更新
-    const newLists = projectData.lists.map(list => {
+    const newLists = projectData.lists.map((list) => {
       if (list.id === from.containerId) return { ...list, tickets: newFromTickets };
       if (list.id === to.containerId) return { ...list, tickets: newToTickets };
       return list;
@@ -117,14 +132,14 @@ export default function Kanban() {
 
     if (from.containerId !== to.containerId) return; // 別コンテナへの移動の場合はリターン (onDragOverで処理済み)
 
-    const list = projectData.lists.find(list => list.id == from.containerId); // リストデータを取得
+    const list = projectData.lists.find((list) => list.id == from.containerId); // リストデータを取得
     if (!list) return;
 
     // arrayMoveを使って並び替え後のチケット一覧データを取得
     const newTickets = arrayMove(list.tickets, from.index, to.index);
 
     // 並べ替え後のリスト一覧データを作成
-    const newLists = projectData.lists.map(list => {
+    const newLists = projectData.lists.map((list) => {
       if (list.id === from.containerId) return { ...list, tickets: newTickets };
       return list;
     });
@@ -141,7 +156,7 @@ export default function Kanban() {
       id={projectData.id}
     >
       <div className="h-screen overflow-hidden">
-        <div className="flex h-full items-start gap-6 min-w-fit px-8 py-8 mt-20 overflow-x-auto overflow-y-auto">
+        <div className="mt-20 flex h-full min-w-fit items-start gap-6 overflow-x-auto overflow-y-auto px-8 py-8">
           {projectData.lists.map((list) => (
             <SortableContext
               items={list.tickets}
@@ -150,26 +165,32 @@ export default function Kanban() {
               strategy={verticalListSortingStrategy}
             >
               <Droppable key={list.id} id={list.id}>
-                <div className="w-72 min-w-72 flex-shrink-0 flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <div className="flex w-72 min-w-72 flex-shrink-0 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                   {/* ヘッダー */}
-                  <div className="flex items-center mb-4">
-                    <div className="flex items-center justify-between w-full">
-                      <span className="py-3 ml-4 font-semibold text-xl text-gray-700">{list.title}</span>
-                      <span className="bg-gray-100 text-gray-600 text-md px-2 py-0.5 mr-4 rounded">{list.tickets.length}</span>
+                  <div className="mb-4 flex items-center">
+                    <div className="flex w-full items-center justify-between">
+                      <span className="ml-4 py-3 text-xl font-semibold text-gray-700">
+                        {list.title}
+                      </span>
+                      <span className="text-md mr-4 rounded bg-gray-100 px-2 py-0.5 text-gray-600">
+                        {list.tickets.length}
+                      </span>
                     </div>
                   </div>
                   {/* カードリスト */}
-                  <div className="flex flex-col gap-3 flex-1 max-h-1/2 overflow-y-auto">
+                  <div className="flex max-h-1/2 flex-1 flex-col gap-3 overflow-y-auto">
                     {list.tickets.map((ticket) => (
                       <Sortable key={ticket.id} id={ticket.id}>
-                        <div className="bg-white border border-gray-200 rounded-md shadow p-3 flex flex-col gap-2">
-                          <div className="font-medium text-sm text-gray-800">{ticket.title ?? `kanban card title - ${ticket.id}`}</div>
+                        <div className="flex flex-col gap-2 rounded-md border border-gray-200 bg-white p-3 shadow">
+                          <div className="text-sm font-medium text-gray-800">
+                            {ticket.title ?? `kanban card title - ${ticket.id}`}
+                          </div>
                         </div>
                       </Sortable>
                     ))}
                   </div>
                   {/* + Create ボタン */}
-                  <button className="mt-4 flex items-center gap-1 text-gray-500 hover:text-blue-600 text-sm font-medium px-2 py-1 rounded transition">
+                  <button className="mt-4 flex items-center gap-1 rounded px-2 py-1 text-sm font-medium text-gray-500 transition hover:text-blue-600">
                     <span className="text-lg">＋</span> Create
                   </button>
                 </div>

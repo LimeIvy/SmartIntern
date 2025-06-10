@@ -1,87 +1,92 @@
-'use client'
+"use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Settings, User, LogOut, Home, Kanban, Calendar, Building2, Menu, X } from "lucide-react"
-import type { ComponentType } from "react"
-import { useState } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { useUser } from "@clerk/nextjs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings, User, LogOut, Home, Kanban, Calendar, Building2, Menu, X } from "lucide-react";
+import type { ComponentType } from "react";
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export type NavigationItem = {
-  id: string,
-  label: string,
-  icon: ComponentType<{ className?: string }>
-}
+  id: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+};
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
-  const { user } = useUser()
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user } = useUser();
 
   const navigationItems: NavigationItem[] = [
     { id: "dashboard", label: "ダッシュボード", icon: Home },
     { id: "kanban", label: "カンバン", icon: Kanban },
     { id: "calendar", label: "カレンダー", icon: Calendar },
     { id: "companies", label: "企業一覧", icon: Building2 },
-  ]
+  ];
 
   const handleClick = (id: string) => {
-    router.push(`/${id}`)
-  }
+    router.push(`/${id}`);
+  };
 
   return (
     <>
       {/* ハンバーガーメニュー（sm未満のみ表示） */}
-      <div className="sm:hidden z-50 absolute top-4 left-4">
+      <div className="absolute top-4 left-4 z-50 sm:hidden">
         <button
-          className="border rounded p-2"
+          className="rounded border p-2"
           onClick={() => setOpen(true)}
           aria-label="メニューを開く"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="h-6 w-6" />
         </button>
       </div>
 
       {/* サイドバー本体（sm以上で表示） */}
-      <div className="w-64 min-w-64 flex-shrink-0 border-r flex-col sticky top-0 h-screen hidden sm:flex">
+      <div className="sticky top-0 hidden h-screen w-64 min-w-64 flex-shrink-0 flex-col border-r sm:flex">
         <div className="p-6">
           <h1 className="text-xl font-bold">就活管理</h1>
         </div>
         <nav className="flex-1 px-4">
           <ul className="space-y-2">
             {navigationItems.map((item) => {
-              const Icon = item.icon
-              const itemPath = `/${item.id}`
-              const isActive = pathname === itemPath
+              const Icon = item.icon;
+              const itemPath = `/${item.id}`;
+              const isActive = pathname === itemPath;
               return (
                 <li key={item.id}>
                   <button
                     onClick={() => handleClick(item.id)}
                     className={
                       isActive
-                        ? "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors border"
-                        : "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors"
+                        ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors"
+                        : "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors"
                     }
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="h-5 w-5" />
                     {item.label}
                   </button>
                 </li>
-              )
+              );
             })}
           </ul>
         </nav>
-        <div className="p-4 border-t">
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-2">
-            <Settings className="w-5 h-5" />
+        <div className="border-t p-4">
+          <button className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2">
+            <Settings className="h-5 w-5" />
             設定
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg">
-                <Avatar className="w-8 h-8">
+              <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
+                <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.imageUrl ?? ""} />
                   <AvatarFallback>{user?.fullName ?? ""}</AvatarFallback>
                 </Avatar>
@@ -92,11 +97,11 @@ export default function Sidebar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem>
-                <User className="w-4 h-4 mr-2" />
+                <User className="mr-2 h-4 w-4" />
                 プロフィール
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="mr-2 h-4 w-4" />
                 ログアウト
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -114,13 +119,13 @@ export default function Sidebar() {
             aria-label="メニューを閉じる"
           />
           {/* サイドバー本体 */}
-          <div className="relative w-64 min-w-64 h-full flex flex-col">
+          <div className="relative flex h-full w-64 min-w-64 flex-col">
             <button
               className="absolute top-4 right-4"
               onClick={() => setOpen(false)}
               aria-label="メニューを閉じる"
             >
-              <X className="w-6 h-6" />
+              <X className="h-6 w-6" />
             </button>
             <div className="p-6">
               <h1 className="text-xl font-bold">就活管理</h1>
@@ -128,36 +133,36 @@ export default function Sidebar() {
             <nav className="flex-1 px-4">
               <ul className="space-y-2">
                 {navigationItems.map((item) => {
-                  const Icon = item.icon
-                  const itemPath = `/${item.id}`
-                  const isActive = pathname === itemPath
+                  const Icon = item.icon;
+                  const itemPath = `/${item.id}`;
+                  const isActive = pathname === itemPath;
                   return (
                     <li key={item.id}>
                       <button
                         onClick={() => handleClick(item.id)}
                         className={
                           isActive
-                            ? "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors border"
-                            : "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors"
+                            ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors"
+                            : "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors"
                         }
                       >
-                        <Icon className="w-5 h-5" />
+                        <Icon className="h-5 w-5" />
                         {item.label}
                       </button>
                     </li>
-                  )
+                  );
                 })}
               </ul>
             </nav>
-            <div className="p-4 border-t">
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg mb-2">
-                <Settings className="w-5 h-5" />
+            <div className="border-t p-4">
+              <button className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2">
+                <Settings className="h-5 w-5" />
                 設定
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg">
-                    <Avatar className="w-8 h-8">
+                  <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={user?.imageUrl ?? ""} />
                       <AvatarFallback>{user?.fullName ?? ""}</AvatarFallback>
                     </Avatar>
@@ -168,11 +173,11 @@ export default function Sidebar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuItem>
-                    <User className="w-4 h-4 mr-2" />
+                    <User className="mr-2 h-4 w-4" />
                     プロフィール
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <LogOut className="w-4 h-4 mr-2" />
+                    <LogOut className="mr-2 h-4 w-4" />
                     ログアウト
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -182,5 +187,5 @@ export default function Sidebar() {
         </div>
       )}
     </>
-  )
+  );
 }

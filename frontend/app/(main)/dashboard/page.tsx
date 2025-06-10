@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   CheckSquare,
@@ -12,17 +12,16 @@ import {
   Clock,
   ExternalLink,
   ChevronRight,
-} from "lucide-react"
+} from "lucide-react";
 
 export default function Dashboard() {
-
-  const today = new Date()
+  const today = new Date();
   const todayString = today.toLocaleDateString("ja-JP", {
     year: "numeric",
     month: "long",
     day: "numeric",
     weekday: "long",
-  })
+  });
 
   const todaySchedule = [
     {
@@ -37,13 +36,13 @@ export default function Dashboard() {
       location: "東京都渋谷区...",
       type: "confirmed",
     },
-  ]
+  ];
 
   const selectionStatus = [
     { status: "書類選考中", count: 4 },
     { status: "面接段階", count: 2 },
     { status: "結果待ち", count: 1 },
-  ]
+  ];
 
   const upcomingTasks = [
     {
@@ -61,31 +60,31 @@ export default function Dashboard() {
       task: "株式会社F 面接日程調整",
       deadline: "6月16日(月) 12:00",
     },
-  ]
+  ];
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* メインコンテンツエリア */}
       <div className="flex-1 p-8">
         {/* ヘッダー */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="mb-8 flex items-start justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">こんにちは、田中さん</h2>
+            <h2 className="mb-2 text-3xl font-bold text-gray-900">こんにちは、田中さん</h2>
             <p className="text-gray-600">{todayString}</p>
           </div>
           <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             企業を登録する
           </Button>
         </div>
 
         {/* カードグリッド */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 今日の予定 */}
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="w-5 h-5" />
+                <Calendar className="h-5 w-5" />
                 今日の予定
               </CardTitle>
             </CardHeader>
@@ -93,26 +92,30 @@ export default function Dashboard() {
               {todaySchedule.length > 0 ? (
                 <div className="space-y-4">
                   {todaySchedule.map((schedule, index) => (
-                    <div key={index} className="flex gap-4 p-3 rounded-lg bg-gray-50 border-l-4">
+                    <div key={index} className="flex gap-4 rounded-lg border-l-4 bg-gray-50 p-3">
                       <div className="flex-shrink-0">
-                        <div className="flex items-center gap-1 text-sm font-medium ">
-                          <Clock className="w-4 h-4" />
+                        <div className="flex items-center gap-1 text-sm font-medium">
+                          <Clock className="h-4 w-4" />
                           {schedule.time}
                         </div>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-1">{schedule.title}</h4>
+                        <h4 className="mb-1 font-medium text-gray-900">{schedule.title}</h4>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="h-4 w-4" />
                           {schedule.location}
-                          {schedule.location.includes("オンライン") && <ExternalLink className="w-4 h-4 ml-1" />}
+                          {schedule.location.includes("オンライン") && (
+                            <ExternalLink className="ml-1 h-4 w-4" />
+                          )}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-8">今日、登録されている予定はありません。</p>
+                <p className="py-8 text-center text-gray-500">
+                  今日、登録されている予定はありません。
+                </p>
               )}
             </CardContent>
           </Card>
@@ -121,7 +124,7 @@ export default function Dashboard() {
           <Card className="shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Flag className="w-5 h-5" />
+                <Flag className="h-5 w-5" />
                 進行中の選考
               </CardTitle>
             </CardHeader>
@@ -130,7 +133,7 @@ export default function Dashboard() {
                 {selectionStatus.map((status, index) => (
                   <button
                     key={index}
-                    className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                    className="flex w-full items-center justify-between rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                   >
                     <div className="flex items-center gap-3">
                       <span className="font-medium text-gray-900">{status.status}</span>
@@ -138,7 +141,7 @@ export default function Dashboard() {
                         {status.count}
                       </Badge>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
                   </button>
                 ))}
               </div>
@@ -149,7 +152,7 @@ export default function Dashboard() {
           <Card className="shadow-sm lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <CheckSquare className="w-5 h-5" />
+                <CheckSquare className="h-5 w-5" />
                 直近のタスク (締切7日以内)
               </CardTitle>
             </CardHeader>
@@ -159,27 +162,33 @@ export default function Dashboard() {
                   {upcomingTasks.map((task, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                      className="flex items-center gap-4 rounded-lg border border-gray-200 p-4 transition-colors hover:border-gray-300"
                     >
                       <div className="flex-shrink-0">
                         <Badge
                           variant={task.daysLeft <= 3 ? "destructive" : "secondary"}
-                          className={task.daysLeft <= 3 ? "bg-red-100 text-red-800" : "bg-orange-100 text-orange-800"}
+                          className={
+                            task.daysLeft <= 3
+                              ? "bg-red-100 text-red-800"
+                              : "bg-orange-100 text-orange-800"
+                          }
                         >
                           あと{task.daysLeft}日
                         </Badge>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 mb-1">{task.task}</h4>
+                        <h4 className="mb-1 font-medium text-gray-900">{task.task}</h4>
                         <p className="text-sm text-gray-600">締切: {task.deadline}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <CheckSquare className="w-12 h-12 text-green-500 mx-auto mb-3" />
-                  <p className="text-green-600 font-medium">直近のタスクはありません。素晴らしい！</p>
+                <div className="py-8 text-center">
+                  <CheckSquare className="mx-auto mb-3 h-12 w-12 text-green-500" />
+                  <p className="font-medium text-green-600">
+                    直近のタスクはありません。素晴らしい！
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -187,5 +196,5 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }

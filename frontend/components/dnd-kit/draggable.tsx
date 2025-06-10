@@ -1,5 +1,5 @@
-import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 
 type DraggableProps = {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ export default function Draggable({ children, id }: DraggableProps) {
 
   const style = {
     transform: CSS.Translate.toString(transform),
-  }
+  };
 
   return (
     <button ref={setNodeRef} style={style} {...listeners} {...attributes}>

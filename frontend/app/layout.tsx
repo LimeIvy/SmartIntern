@@ -21,14 +21,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${outfit.className} antialiased`}
-      >
-        <ClerkProvider
-          localization={jaJP}
-        >
-          {children}
-        </ClerkProvider>
+      <body className={`${outfit.className} antialiased`}>
+        <ClerkProvider localization={jaJP}>{children}</ClerkProvider>
       </body>
     </html>
   );

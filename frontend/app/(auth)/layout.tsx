@@ -1,11 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className='flex justify-center pt-20'>
-        {children}
-    </div>
-  )
-}
+  return <div className="flex justify-center pt-20">{children}</div>;
+};
 
-export default Layout
+export default Layout;

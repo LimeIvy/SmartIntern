@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Flag,
   Building2,
@@ -20,15 +20,15 @@ import {
   Copy,
   ChevronDown,
   Save,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CompanyDetail() {
-  const router = useRouter()
+  const router = useRouter();
   const [companyMemo, setCompanyMemo] = useState(
-    "説明会で聞いた内容：\n- 新規事業に力を入れている\n- リモートワーク推奨\n- 若手の裁量が大きい",
-  )
-  const [openAccordions, setOpenAccordions] = useState<string[]>([])
+    "説明会で聞いた内容：\n- 新規事業に力を入れている\n- リモートワーク推奨\n- 若手の裁量が大きい"
+  );
+  const [openAccordions, setOpenAccordions] = useState<string[]>([]);
 
   const esStock = [
     {
@@ -49,7 +49,7 @@ export default function CompanyDetail() {
       content:
         "貴社を志望する理由は、「テクノロジーで社会課題を解決する」という企業理念に強く共感したからです。特に、貴社が手がけている...",
     },
-  ]
+  ];
 
   const selections = [
     {
@@ -66,56 +66,58 @@ export default function CompanyDetail() {
       statusColor: "bg-yellow-100 text-yellow-800",
       nextSchedule: "結果待ち",
     },
-  ]
+  ];
 
   const toggleAccordion = (id: string) => {
-    setOpenAccordions((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
-  }
+    setOpenAccordions((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* メインコンテンツエリア */}
       <div className="flex-1 p-8">
         {/* ヘッダー */}
-        <div className="flex justify-between items-start mb-8">
+        <div className="mb-8 flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-gray-500" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200">
+              <Building2 className="h-8 w-8 text-gray-500" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">株式会社A</h2>
+              <h2 className="mb-2 text-3xl font-bold text-gray-900">株式会社A</h2>
               <a
                 href="https://example.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
               >
                 https://example.com
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => router.push(`/companies/new`)}>
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="mr-2 h-4 w-4" />
               編集
             </Button>
             <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
-              <Trash2 className="w-4 h-4 mr-2" />
+              <Trash2 className="mr-2 h-4 w-4" />
               削除
             </Button>
           </div>
         </div>
 
         {/* カードグリッド */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* 左列 */}
           <div className="space-y-6">
             {/* 企業メモ */}
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <StickyNote className="w-5 h-5 text-blue-600" />
+                  <StickyNote className="h-5 w-5 text-blue-600" />
                   企業メモ
                 </CardTitle>
               </CardHeader>
@@ -124,10 +126,10 @@ export default function CompanyDetail() {
                   value={companyMemo}
                   onChange={(e) => setCompanyMemo(e.target.value)}
                   placeholder="説明会やOB訪問で得た情報を記録しましょう..."
-                  className="min-h-[200px] mb-4"
+                  className="mb-4 min-h-[200px]"
                 />
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                  <Save className="w-4 h-4 mr-2" />
+                  <Save className="mr-2 h-4 w-4" />
                   保存
                 </Button>
               </CardContent>
@@ -137,7 +139,7 @@ export default function CompanyDetail() {
             <Card className="shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className="h-5 w-5 text-blue-600" />
                   ESストックルーム
                 </CardTitle>
               </CardHeader>
@@ -147,24 +149,27 @@ export default function CompanyDetail() {
                     <Collapsible key={item.id}>
                       <CollapsibleTrigger
                         onClick={() => toggleAccordion(item.id)}
-                        className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                        className="flex w-full items-center justify-between rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                       >
                         <span className="font-medium text-gray-900">{item.title}</span>
                         <ChevronDown
-                          className={`w-4 h-4 text-gray-500 transition-transform ${openAccordions.includes(item.id) ? "rotate-180" : ""
-                            }`}
+                          className={`h-4 w-4 text-gray-500 transition-transform ${
+                            openAccordions.includes(item.id) ? "rotate-180" : ""
+                          }`}
                         />
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-2">
-                        <div className="p-4 bg-white border border-gray-200 rounded-lg">
-                          <p className="text-sm text-gray-700 mb-3 leading-relaxed">{item.content}</p>
+                        <div className="rounded-lg border border-gray-200 bg-white p-4">
+                          <p className="mb-3 text-sm leading-relaxed text-gray-700">
+                            {item.content}
+                          </p>
                           <div className="flex gap-2">
                             <Button variant="outline" size="sm">
-                              <Copy className="w-4 h-4 mr-2" />
+                              <Copy className="mr-2 h-4 w-4" />
                               コピー
                             </Button>
                             <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4 mr-2" />
+                              <Edit className="mr-2 h-4 w-4" />
                               編集
                             </Button>
                           </div>
@@ -173,8 +178,8 @@ export default function CompanyDetail() {
                     </Collapsible>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full mt-4">
-                  <Plus className="w-4 h-4 mr-2" />
+                <Button variant="outline" className="mt-4 w-full">
+                  <Plus className="mr-2 h-4 w-4" />
                   新しい文章を追加
                 </Button>
               </CardContent>
@@ -188,11 +193,11 @@ export default function CompanyDetail() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center gap-2">
-                    <Flag className="w-5 h-5 text-blue-600" />
+                    <Flag className="h-5 w-5 text-blue-600" />
                     この企業の選考一覧
                   </div>
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="mr-2 h-4 w-4" />
                     選考を追加
                   </Button>
                 </CardTitle>
@@ -202,17 +207,17 @@ export default function CompanyDetail() {
                   {selections.map((selection) => (
                     <div
                       key={selection.id}
-                      className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors cursor-pointer"
+                      className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:border-gray-300"
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="mb-2 flex items-start justify-between">
                         <h4 className="font-medium text-gray-900">{selection.name}</h4>
-                        <ChevronRight className="w-4 h-4 text-gray-400 mt-1" />
+                        <ChevronRight className="mt-1 h-4 w-4 text-gray-400" />
                       </div>
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="mb-2 flex items-center gap-3">
                         <Badge className={selection.statusColor}>{selection.status}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="h-4 w-4" />
                         {selection.nextSchedule}
                       </div>
                     </div>
@@ -224,5 +229,5 @@ export default function CompanyDetail() {
         </div>
       </div>
     </div>
-  )
+  );
 }
