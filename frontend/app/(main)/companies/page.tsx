@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { InferResponseType } from "hono";
+import { client } from "@/lib/hono";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,82 +22,69 @@ import {
   Edit,
   Trash2,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+// APIレスポンスの型を拡張してselectionsをオプショナルで含める
+type CompanyFromApi = InferResponseType<
+  typeof client.api.company.$get,
+  200
+>[number] & {
+  selections: { id: string; name: string; status: string }[];
+  memo?: string | null; // memoをnoteに合わせる
+};
+
+type Selection = CompanyFromApi["selections"][number];
+
+const getStatusColor = (status: string) => {
+  // このマッピングは実際のステータス名に合わせて調整が必要です
+  if (status.includes("内定")) return "bg-green-100 text-green-800";
+  if (status.includes("お祈り")) return "bg-gray-100 text-gray-800";
+  if (status.includes("面接") || status.includes("選考")) return "bg-blue-100 text-blue-800";
+  return "bg-yellow-100 text-yellow-800";
+};
 
 export default function CompaniesList() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("すべて");
+  const [companies, setCompanies] = useState<CompanyFromApi[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await client.api.company.$get();
+        if (!res.ok) {
+          throw new Error("企業の取得に失敗しました。");
+        }
+        const data = (await res.json()) as (Omit<
+          CompanyFromApi,
+          "selections" | "memo"
+        > & {
+          note: string | null;
+          selections?: { id: string; name: string; status: string }[];
+        })[];
+
+        // APIからのデータにselectionsがない場合、空配列をセットする
+        const companiesWithSelections = data.map((company) => ({
+          ...company,
+          selections: company.selections || [],
+          memo: company.note, // noteをmemoにマッピング
+        }));
+        setCompanies(companiesWithSelections);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "不明なエラーが発生しました。");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCompanies();
+  }, []);
 
   const filterOptions = ["すべて", "選考中", "内定", "お祈り", "未応募"];
-
-  // サンプルデータ
-  const companies = [
-    {
-      id: "1",
-      name: "株式会社A",
-      url: "https://company-a.com",
-      logo: "/placeholder.svg?height=48&width=48",
-      memo: "説明会で聞いた内容：新規事業に力を入れている、リモートワーク推奨",
-      selections: [
-        { name: "2025年 新卒採用", status: "一次面接", statusColor: "bg-blue-100 text-blue-800" },
-        { name: "夏期インターン", status: "内定", statusColor: "bg-green-100 text-green-800" },
-      ],
-      lastUpdated: "2日前",
-    },
-    {
-      id: "2",
-      name: "株式会社B",
-      url: "https://company-b.com",
-      logo: "/placeholder.svg?height=48&width=48",
-      memo: "OB訪問で得た情報：若手の裁量が大きい、成長環境が整っている",
-      selections: [
-        {
-          name: "2025年 新卒採用",
-          status: "書類選考中",
-          statusColor: "bg-yellow-100 text-yellow-800",
-        },
-      ],
-      lastUpdated: "1週間前",
-    },
-    {
-      id: "3",
-      name: "株式会社C",
-      url: "https://company-c.com",
-      logo: "/placeholder.svg?height=48&width=48",
-      memo: "技術力の高い会社。エンジニアの働きやすさに定評がある",
-      selections: [
-        { name: "2025年 新卒採用", status: "お祈り", statusColor: "bg-gray-100 text-gray-800" },
-      ],
-      lastUpdated: "3週間前",
-    },
-    {
-      id: "4",
-      name: "株式会社D",
-      url: "https://company-d.com",
-      logo: "/placeholder.svg?height=48&width=48",
-      memo: "グローバル展開している企業。海外勤務の機会もある",
-      selections: [
-        {
-          name: "2025年 新卒採用",
-          status: "最終面接",
-          statusColor: "bg-purple-100 text-purple-800",
-        },
-        { name: "冬期インターン", status: "内定", statusColor: "bg-green-100 text-green-800" },
-      ],
-      lastUpdated: "5日前",
-    },
-    {
-      id: "5",
-      name: "株式会社E",
-      url: "https://company-e.com",
-      logo: "/placeholder.svg?height=48&width=48",
-      memo: "",
-      selections: [],
-      lastUpdated: "1ヶ月前",
-    },
-  ];
 
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -105,11 +94,11 @@ export default function CompaniesList() {
     const hasStatus = company.selections.some((selection) => {
       switch (filterStatus) {
         case "選考中":
-          return !["内定", "お祈り"].includes(selection.status);
+          return !["内定", "お祈り"].some((s) => selection.status.includes(s));
         case "内定":
-          return selection.status === "内定";
+          return selection.status.includes("内定");
         case "お祈り":
-          return selection.status === "お祈り";
+          return selection.status.includes("お祈り");
         case "未応募":
           return company.selections.length === 0;
         default:
@@ -122,19 +111,7 @@ export default function CompaniesList() {
     );
   });
 
-  const CompanyCard = ({
-    company,
-  }: {
-    company: {
-      id: string;
-      name: string;
-      url: string;
-      logo: string;
-      memo: string;
-      selections: { name: string; status: string; statusColor: string }[];
-      lastUpdated: string;
-    };
-  }) => {
+  const CompanyCard = ({ company }: { company: CompanyFromApi }) => {
     const router = useRouter();
     return (
       <Card
@@ -148,7 +125,9 @@ export default function CompaniesList() {
                 <Building2 className="h-6 w-6 text-gray-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="mb-1 text-lg font-semibold text-gray-900">{company.name}</h3>
+                <h3 className="mb-1 truncate text-lg font-semibold text-gray-900">
+                  {company.name}
+                </h3>
                 {company.url && (
                   <a
                     href={company.url}
@@ -157,8 +136,8 @@ export default function CompaniesList() {
                     className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    {company.url}
-                    <ExternalLink className="h-3 w-3" />
+                    <span className="truncate">{company.url}</span>
+                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
                   </a>
                 )}
               </div>
@@ -171,15 +150,15 @@ export default function CompaniesList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); router.push(`/companies/${company.id}`)}}>
                   <Eye className="mr-2 h-4 w-4" />
                   詳細を見る
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); /* 編集ページへの遷移処理 */ }}>
                   <Edit className="mr-2 h-4 w-4" />
                   編集
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={(e) => { e.stopPropagation(); /* 削除処理 */ }}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   削除
                 </DropdownMenuItem>
@@ -192,17 +171,12 @@ export default function CompaniesList() {
             <div className="mb-4">
               <h4 className="mb-2 text-sm font-medium text-gray-700">選考状況</h4>
               <div className="flex flex-wrap gap-2">
-                {company.selections.map(
-                  (
-                    selection: { name: string; status: string; statusColor: string },
-                    index: number
-                  ) => (
-                    <div key={index} className="flex items-center gap-2 text-xs">
-                      <span className="text-gray-600">{selection.name}:</span>
-                      <Badge className={selection.statusColor}>{selection.status}</Badge>
-                    </div>
-                  )
-                )}
+                {company.selections.map((selection: Selection, index: number) => (
+                  <div key={index} className="flex items-center gap-2 text-xs">
+                    <span className="text-gray-600">{selection.name}:</span>
+                    <Badge className={getStatusColor(selection.status)}>{selection.status}</Badge>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -214,15 +188,36 @@ export default function CompaniesList() {
             </div>
           )}
 
-          {/* 最終更新日 */}
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>最終更新: {company.lastUpdated}</span>
+          {/* フッター情報 */}
+          <div className="flex items-center justify-end text-xs text-gray-500">
             <span>{company.selections.length}件の選考</span>
           </div>
         </CardContent>
       </Card>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-1 items-center justify-center bg-gray-50 p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-1 items-center justify-center bg-gray-50 p-8">
+        <div className="text-center">
+          <h3 className="mb-2 text-lg font-medium text-red-600">エラーが発生しました</h3>
+          <p className="text-gray-600">{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            再読み込み
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -293,7 +288,10 @@ export default function CompaniesList() {
                 : "最初の企業を登録して就活管理を始めましょう"}
             </p>
             {!searchQuery && filterStatus === "すべて" && (
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => router.push(`/companies/new`)}
+              >
                 <Plus className="mr-2 h-4 w-4" />
                 新しい企業を登録
               </Button>
@@ -302,7 +300,7 @@ export default function CompaniesList() {
         )}
 
         {/* 統計情報 */}
-        {filteredCompanies.length > 0 && (
+        {companies.length > 0 && (
           <div className="mt-8 text-sm text-gray-600">
             {searchQuery || filterStatus !== "すべて"
               ? `${filteredCompanies.length}件の企業が見つかりました`
