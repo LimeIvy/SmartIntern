@@ -1,14 +1,8 @@
 import { Hono } from "hono"
 import db from "@/lib/prisma"
-import { z } from "zod"
 import { zValidator } from "@hono/zod-validator"
 import { checkUser } from "@/lib/checkUser"
-
-export const schema = z.object({
-  name: z.string().min(1, "Please write something."),
-  url: z.string().min(1, "Please write something."),
-  note: z.string().min(1, "Please write something.")
-})
+import { addCompanySchema } from "@/app/schemas/add_campany_schema"
 
 const app = new Hono()
   .get("/", async (c) => {
@@ -21,12 +15,19 @@ const app = new Hono()
       where: {
         userId: user.id,
       },
+      include: {
+        selections: true,
+        urls: true,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
     })
 
     return c.json(companies)
   })
 
-  .post("/", zValidator("form", schema), async (c) => {
+  .post("/", zValidator("form", addCompanySchema), async (c) => {
     const data = c.req.valid("form")
     const user = await checkUser()
     if (!user) {
@@ -37,7 +38,12 @@ const app = new Hono()
       .company.create({
         data: {
           name: data.name,
-          url: data.url,
+          urls: {
+            create: {
+              type: "official",
+              url: data.url,
+            },
+          },
           note: data.note,
           userId: user.id,
         },

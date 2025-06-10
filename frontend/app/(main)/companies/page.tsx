@@ -17,7 +17,6 @@ import {
   Building2,
   Plus,
   Search,
-  ExternalLink,
   MoreVertical,
   Edit,
   Trash2,
@@ -28,20 +27,17 @@ import { useRouter } from "next/navigation";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
 type CompanyFromApi = InferResponseType<
-  typeof client.api.company.$get,
+  (typeof client.api.company)["$get"],
   200
->[number] & {
-  selections: { id: string; name: string; status: string }[];
-  memo?: string | null; // memoをnoteに合わせる
-};
+>[number];
 
 type Selection = CompanyFromApi["selections"][number];
 
 const getStatusColor = (status: string) => {
   // このマッピングは実際のステータス名に合わせて調整が必要です
-  if (status.includes("内定")) return "bg-green-100 text-green-800";
-  if (status.includes("お祈り")) return "bg-gray-100 text-gray-800";
-  if (status.includes("面接") || status.includes("選考")) return "bg-blue-100 text-blue-800";
+  if (status.includes("OFFERED")) return "bg-green-100 text-green-800";
+  if (status.includes("REJECTED")) return "bg-gray-100 text-gray-800";
+  if (status.includes("INTERVIEW")) return "bg-blue-100 text-blue-800";
   return "bg-yellow-100 text-yellow-800";
 };
 
@@ -60,21 +56,8 @@ export default function CompaniesList() {
         if (!res.ok) {
           throw new Error("企業の取得に失敗しました。");
         }
-        const data = (await res.json()) as (Omit<
-          CompanyFromApi,
-          "selections" | "memo"
-        > & {
-          note: string | null;
-          selections?: { id: string; name: string; status: string }[];
-        })[];
-
-        // APIからのデータにselectionsがない場合、空配列をセットする
-        const companiesWithSelections = data.map((company) => ({
-          ...company,
-          selections: company.selections || [],
-          memo: company.note, // noteをmemoにマッピング
-        }));
-        setCompanies(companiesWithSelections);
+        const data = await res.json();
+        setCompanies(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "不明なエラーが発生しました。");
       } finally {
@@ -94,11 +77,11 @@ export default function CompaniesList() {
     const hasStatus = company.selections.some((selection) => {
       switch (filterStatus) {
         case "選考中":
-          return !["内定", "お祈り"].some((s) => selection.status.includes(s));
+          return !["OFFERED", "REJECTED"].some((s) => selection.status.includes(s));
         case "内定":
-          return selection.status.includes("内定");
+          return selection.status.includes("OFFERED");
         case "お祈り":
-          return selection.status.includes("お祈り");
+          return selection.status.includes("REJECTED");
         case "未応募":
           return company.selections.length === 0;
         default:
@@ -113,6 +96,7 @@ export default function CompaniesList() {
 
   const CompanyCard = ({ company }: { company: CompanyFromApi }) => {
     const router = useRouter();
+
     return (
       <Card
         className="cursor-pointer transition-shadow hover:shadow-md"
@@ -128,18 +112,7 @@ export default function CompaniesList() {
                 <h3 className="mb-1 truncate text-lg font-semibold text-gray-900">
                   {company.name}
                 </h3>
-                {company.url && (
-                  <a
-                    href={company.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className="truncate">{company.url}</span>
-                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                  </a>
-                )}
+                
               </div>
             </div>
 
@@ -173,7 +146,7 @@ export default function CompaniesList() {
               <div className="flex flex-wrap gap-2">
                 {company.selections.map((selection: Selection, index: number) => (
                   <div key={index} className="flex items-center gap-2 text-xs">
-                    <span className="text-gray-600">{selection.name}:</span>
+                    <span className="text-gray-600">{selection.type}:</span>
                     <Badge className={getStatusColor(selection.status)}>{selection.status}</Badge>
                   </div>
                 ))}
@@ -182,9 +155,9 @@ export default function CompaniesList() {
           )}
 
           {/* メモ */}
-          {company.memo && (
+          {company.note && (
             <div className="mb-4">
-              <p className="line-clamp-2 text-sm text-gray-600">{company.memo}</p>
+              <p className="line-clamp-2 text-sm text-gray-600">{company.note}</p>
             </div>
           )}
 
