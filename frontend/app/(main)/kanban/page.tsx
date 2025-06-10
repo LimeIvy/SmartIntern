@@ -141,7 +141,7 @@ export default function Kanban() {
       id={projectData.id}
     >
       <div className="h-screen overflow-hidden">
-        <div className="flex h-full items-start gap-6 min-w-fit px-8 py-8 mt-20 overflow-x-auto overflow-y-hidden">
+        <div className="flex h-full items-start gap-6 min-w-fit px-8 py-8 mt-20 overflow-x-auto overflow-y-auto">
           {projectData.lists.map((list) => (
             <SortableContext
               items={list.tickets}
