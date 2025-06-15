@@ -61,6 +61,8 @@ const app = new Hono()
           name: data.name,
           note: data.note,
           userId: user.id,
+          industry: data.industry,
+          logoUrl: data.logoUrl,
         },
       });
 

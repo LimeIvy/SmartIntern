@@ -9,6 +9,8 @@ export const addCompanySchema = z.object({
         url: z.string().url({ message: "有効なURLを入力してください。" }),
       })
     )
-    .min(1, { message: "少なくとも1つのURLを追加してください。" }),
+    .min(0),
   note: z.string().optional(),
+  industry: z.string().optional(),
+  logoUrl: z.string().optional(),
 }); 
