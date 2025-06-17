@@ -13,6 +13,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { Building2, Plus, Search, MoreVertical, Trash2, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
@@ -22,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
 
 type Selection = CompanyFromApi["selections"][number];
+type Schedule = Selection["schedules"][number];
 
 const getStatusColor = (status: string) => {
   // このマッピングは実際のステータス名に合わせて調整が必要です
@@ -118,10 +125,7 @@ export default function CompaniesList() {
     const router = useRouter();
 
     return (
-      <Card
-        className="cursor-pointer transition-shadow hover:shadow-md"
-        onClick={() => router.push(`/companies/${company.id}`)}
-      >
+      <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-6">
           <div className="mb-4 flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -137,12 +141,13 @@ export default function CompaniesList() {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" className="cursor-pointer" onClick={(e) => e.stopPropagation()}>
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
+                  className="cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(`/companies/${company.id}`);
@@ -152,7 +157,7 @@ export default function CompaniesList() {
                   詳細を見る
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="text-red-600"
+                  className="text-red-600 cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete(company.id);
@@ -165,29 +170,63 @@ export default function CompaniesList() {
             </DropdownMenu>
           </div>
 
-          {/* 選考状況 */}
-          {company.selections.length > 0 && (
-            <div className="mb-4">
-              <h4 className="mb-2 text-sm font-medium text-gray-700">選考状況</h4>
-              <div className="flex flex-wrap gap-2">
-                {company.selections.map((selection: Selection, index: number) => (
-                  <div key={index} className="flex items-center gap-2 text-xs">
-                    <span className="text-gray-600">{translateSelectionType(selection.type)}:</span>
-                    <Badge className={getStatusColor(selection.status)}>
-                      {translateStatus(selection.status)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* メモ */}
-          {company.note && (
+          {company.note ? (
             <div className="mb-4">
               <p className="line-clamp-2 text-sm text-gray-600">{company.note}</p>
             </div>
+          ) : (
+            <div className="mb-4">
+              <p className="line-clamp-2 text-sm text-gray-600">会社メモはありません</p>
+            </div>
           )}
+
+          {/* 選考状況 */}
+          <Accordion type="multiple" className="w-full">
+            <AccordionItem value="selections">
+              <AccordionTrigger>選考状況</AccordionTrigger>
+              <AccordionContent>
+                {company.selections.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {company.selections.map((selection: Selection, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-600 text-sm">{selection.name}</span>
+                          <span className="text-gray-600">{translateSelectionType(selection.type)}:</span>
+                          <Badge className={getStatusColor(selection.status)}>
+                            {translateStatus(selection.status)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="schedules">
+              <AccordionTrigger>スケジュール</AccordionTrigger>
+              <AccordionContent>
+                {company.selections.length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {company.selections.map((selection: Selection, index: number) => (
+                        <div key={index} className="flex items-center gap-2 text-xs">
+                          {selection.schedules.map((schedule: Schedule, index: number) => (
+                            <div key={index} className="flex items-center gap-2 text-xs">
+                              <span className="text-gray-600 text-sm">{schedule.title}</span>
+                              <span className="text-gray-600">{schedule.startDate}</span>
+                              <span className="text-gray-600">{schedule.endDate}</span>
+                              <span className="text-gray-600">{schedule.location}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           {/* フッター情報 */}
           <div className="flex items-center justify-end text-xs text-gray-500">
@@ -291,11 +330,10 @@ export default function CompaniesList() {
               <button
                 key={option}
                 onClick={() => setFilterStatus(option)}
-                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${
-                  filterStatus === option
-                    ? "bg-white text-blue-700 shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
+                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${filterStatus === option
+                  ? "bg-white text-blue-700 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+                  }`}
               >
                 {option}
               </button>

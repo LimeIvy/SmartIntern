@@ -16,7 +16,11 @@ const app = new Hono()
         userId: user.id,
       },
       include: {
-        selections: true,
+        selections: {
+          include: {
+            schedules: true,
+          },
+        },
         urls: true,
       },
       orderBy: {
@@ -37,7 +41,11 @@ const app = new Hono()
       where: { id, userId: user.id },
       include: {
         urls: true,
-        selections: true,
+        selections: {
+          include: {
+            schedules: true,
+          },
+        },
       },
     });
 

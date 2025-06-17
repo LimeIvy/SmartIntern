@@ -81,7 +81,8 @@ model Selection {
 model Schedule {
   id          String        @id @default(cuid())
   title       String        // 例：「一次面接」「ES提出締切」
-  date        DateTime      // 予定の日時
+  startDate   DateTime      // 予定の開始日時
+  endDate     DateTime     // 予定の終了日時
   isConfirmed Boolean       @default(true) // 確定 or 未確定フラグ
   location    String?       // 場所
   url         String?       // スケジュールのURL
@@ -93,7 +94,6 @@ model Schedule {
   selectionId String
   selection   Selection     @relation(fields: [selectionId], references: [id], onDelete: Cascade)
 }
-
 
 // Enum: 選考タイプを定義
 enum SelectionType {
