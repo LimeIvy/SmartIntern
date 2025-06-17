@@ -23,6 +23,7 @@ import { Building2, Plus, Search, MoreVertical, Trash2, Eye } from "lucide-react
 import { useRouter } from "next/navigation";
 import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formattedDate } from "@/utils/formattedDate";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
@@ -213,10 +214,9 @@ export default function CompaniesList() {
                         <div key={index} className="flex items-center gap-2 text-xs">
                           {selection.schedules.map((schedule: Schedule, index: number) => (
                             <div key={index} className="flex items-center gap-2 text-xs">
-                              <span className="text-gray-600 text-sm">{schedule.title}</span>
-                              <span className="text-gray-600">{schedule.startDate}</span>
-                              <span className="text-gray-600">{schedule.endDate}</span>
-                              <span className="text-gray-600">{schedule.location}</span>
+                              <h3 className="text-gray-600 text-sm">{schedule.title}</h3>
+                              <p className="text-gray-600">{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</p>
+                              <p className="text-gray-600">{schedule.location}</p>
                             </div>
                           ))}
                         </div>
