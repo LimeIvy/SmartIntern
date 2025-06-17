@@ -13,7 +13,7 @@ import { useRouter, useParams } from "next/navigation";
 
 export default function CompanyNew() {
   const router = useRouter();
-  const { campanyId } = useParams();
+  const { companyId } = useParams();
   const [companyUrl, setCompanyUrl] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [companyMemo, setCompanyMemo] = useState("");
@@ -35,7 +35,7 @@ export default function CompanyNew() {
               variant="ghost"
               size="sm"
               className="mb-4"
-              onClick={() => router.push(`/campanies/${campanyId}`)}
+              onClick={() => router.push(`/campanies/${companyId}`)}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               戻る

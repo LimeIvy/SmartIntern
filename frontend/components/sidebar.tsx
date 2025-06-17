@@ -11,7 +11,7 @@ import { Settings, User, LogOut, Home, Kanban, Calendar, Building2, Menu, X } fr
 import type { ComponentType } from "react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 
 export type NavigationItem = {
   id: string;
@@ -177,8 +177,10 @@ export default function Sidebar() {
                     プロフィール
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    ログアウト
+                    <SignOutButton>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        ログアウト
+                    </SignOutButton>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

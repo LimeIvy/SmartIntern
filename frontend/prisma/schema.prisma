@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,6 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // 1. ユーザーモデル
@@ -34,8 +29,9 @@ model User {
 model Company {
   id          String    @id @default(cuid())
   name        String    // 企業名
-  url         String?   // 企業URL
+  logoUrl     String?   // 企業ロゴURL
   note        String?   // 企業に関する自由なメモ
+  industry    String?   // 企業の業界
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -45,12 +41,26 @@ model Company {
 
   // リレーション：一つの企業は複数の選考を持つ
   selections  Selection[]
+  urls CompanyUrl[]
+}
+
+// 企業のURL
+model CompanyUrl {
+  id        String   @id @default(cuid())
+  type      String  // URLの名前
+  url       String   // 実際のURL
+  createdAt DateTime @default(now())
+
+  // リレーション：どの企業に紐づくURLか
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 // 3. 選考カードモデル
 // インターンや本選考など、個別の選考プロセスを管理します。
 model Selection {
   id          String         @id @default(cuid())
+  name        String         // 選考名
   type        SelectionType  // 選考タイプ（インターン or 本選考）
   status      Status         @default(APPLIED) // カンバンボードのレーンに対応するステータス
   note        String?        // この選考に関するメモ
@@ -73,7 +83,8 @@ model Schedule {
   title       String        // 例：「一次面接」「ES提出締切」
   date        DateTime      // 予定の日時
   isConfirmed Boolean       @default(true) // 確定 or 未確定フラグ
-  location    String?       // 場所やオンラインURL
+  location    String?       // 場所
+  url         String?       // スケジュールのURL
   note        String?       // スケジュールに関するメモ
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -93,7 +104,8 @@ enum SelectionType {
 // Enum: カンバンボードのステータスを定義
 enum Status {
   INTERESTED  // 興味あり
-  APPLIED     // 応募済み・書類選考中
+  APPLIED     // 応募済み
+  ES_SUBMITTED // ES提出済み
   WEBTEST     // Webテスト
   INTERVIEW_1 // 一次面接
   INTERVIEW_2 // 二次面接
