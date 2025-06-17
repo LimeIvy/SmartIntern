@@ -60,6 +60,7 @@ model CompanyUrl {
 // インターンや本選考など、個別の選考プロセスを管理します。
 model Selection {
   id          String         @id @default(cuid())
+  name        String         // 選考名
   type        SelectionType  // 選考タイプ（インターン or 本選考）
   status      Status         @default(APPLIED) // カンバンボードのレーンに対応するステータス
   note        String?        // この選考に関するメモ

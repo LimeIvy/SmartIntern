@@ -56,12 +56,11 @@ export default function CompanyNew() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* メインコンテンツエリア */}
-      <div className="flex flex-1 justify-center p-8">
+      <div className="flex flex-1 items-center justify-center p-8">
         <div className="w-full max-w-2xl">
           {/* ヘッダー */}
-          <div className="mb-8">
+          <div className="mt-4 mb-6">
             <h2 className="mb-2 text-3xl font-bold">企業情報を追加</h2>
-            <p>企業名とURLを追加しましょう。</p>
           </div>
 
           {/* 入力フォーム */}

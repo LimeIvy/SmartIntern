@@ -258,7 +258,7 @@ export default function CompaniesList() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* メインコンテンツエリア */}
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-8 mt-10">
         {/* ヘッダー */}
         <div className="mb-8 flex items-start justify-between">
           <div>
