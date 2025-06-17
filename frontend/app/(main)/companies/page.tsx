@@ -19,7 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Building2, Plus, Search, MoreVertical, Trash2, Eye } from "lucide-react";
+import { Building2, Plus, Search, MoreVertical, Trash2, Eye, Calendar, Video, MapPin, Link } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,9 +27,6 @@ import { formattedDate } from "@/utils/formattedDate";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
-
-type Selection = CompanyFromApi["selections"][number];
-type Schedule = Selection["schedules"][number];
 
 const getStatusColor = (status: string) => {
   // このマッピングは実際のステータス名に合わせて調整が必要です
@@ -183,54 +180,72 @@ export default function CompaniesList() {
           )}
 
           {/* 選考状況 */}
-          <Accordion type="multiple" className="w-full">
-            <AccordionItem value="selections">
-              <AccordionTrigger>選考状況</AccordionTrigger>
-              <AccordionContent>
-                {company.selections.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {company.selections.map((selection: Selection, index: number) => (
-                        <div key={index} className="flex items-center gap-2 text-xs">
-                          <span className="text-gray-600 text-sm">{selection.name}</span>
-                          <span className="text-gray-600">{translateSelectionType(selection.type)}:</span>
-                          <Badge className={getStatusColor(selection.status)}>
-                            {translateStatus(selection.status)}
-                          </Badge>
-                        </div>
-                      ))}
+          <div className="space-y-4">
+            {company.selections.length > 0 ? (
+              <div className="space-y-6">
+                {/* selectionsのループはここだけ */}
+                {company.selections.map((selection, index) => (
+                  <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
+                    {/* 選考情報 */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-md text-gray-800">{selection.name}</h4>
+                        <span className="text-sm text-gray-500">({translateSelectionType(selection.type)})</span>
+                      </div>
+                      <Badge className={getStatusColor(selection.status)}>
+                        {translateStatus(selection.status)}
+                      </Badge>
                     </div>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="schedules">
-              <AccordionTrigger>スケジュール</AccordionTrigger>
-              <AccordionContent>
-                {company.selections.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {company.selections.map((selection: Selection, index: number) => (
-                        <div key={index} className="flex items-center gap-2 text-xs">
-                          {selection.schedules.map((schedule: Schedule, index: number) => (
-                            <div key={index} className="flex items-center gap-2 text-xs">
-                              <h3 className="text-gray-600 text-sm">{schedule.title}</h3>
-                              <p className="text-gray-600">{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</p>
-                              <p className="text-gray-600">{schedule.location}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
 
-          {/* フッター情報 */}
-          <div className="flex items-center justify-end text-xs text-gray-500">
-            <span>{company.selections.length}件の選考</span>
+                    {/* 紐づくスケジュール */}
+                    {selection.schedules.length > 0 ? (
+                      <div className="space-y-1 pl-4">
+                        {selection.schedules.map((schedule, sIndex) => (
+                          <div key={sIndex}>
+                            <Accordion
+                              type="single"
+                              collapsible
+                              className="w-full"
+                            >
+                              <AccordionItem value={schedule.id}>
+                                <AccordionTrigger><p className="font-medium text-gray-700">{schedule.title}</p></AccordionTrigger>
+                                <AccordionContent>
+                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                    <Calendar className="h-4 w-4" />
+                                    <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                    {/* 場所に応じてアイコンを出し分ける */}
+                                    {schedule.location?.toLowerCase().includes('オンライン') ? (
+                                      <Video className="h-4 w-4" />
+                                    ) : (
+                                      <MapPin className="h-4 w-4" />
+                                    )}
+                                    <span>{schedule.location}</span>
+                                  </div>
+                                  {schedule.url && (
+                                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                      <Link className="h-4 w-4" />
+                                      <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                    </div>
+                                  )}
+                                </AccordionContent>
+                              </AccordionItem>
+                            </Accordion>
+
+
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 pl-4">この選考のスケジュールはありません。</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>選考情報はありません。</p>
+            )}
           </div>
         </CardContent>
       </Card>

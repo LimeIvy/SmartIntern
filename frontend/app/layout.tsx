@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { StagewiseToolbar } from '@stagewise/toolbar-next';
 import { jaJP } from "@/locate/ja-JP";
 
 const outfit = Outfit({
@@ -22,6 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${outfit.className} antialiased`}>
+        <StagewiseToolbar
+          config={{
+            plugins: [],
+          }}
+        />
         <ClerkProvider localization={jaJP}>{children}</ClerkProvider>
       </body>
     </html>

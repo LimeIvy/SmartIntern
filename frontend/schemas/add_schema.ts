@@ -14,3 +14,10 @@ export const addCompanySchema = z.object({
   industry: z.string().optional(),
   logoUrl: z.string().optional(),
 }); 
+
+export const addSelectionSchema = z.object({
+  name: z.string().min(1, { message: "選考名は必須です。" }),
+  type: z.enum(["INTERNSHIP", "FULLTIME"]),
+  status: z.enum(["INTERESTED", "APPLIED", "ES_SUBMITTED", "WEBTEST", "INTERVIEW_1", "INTERVIEW_2", "INTERVIEW_3", "FINAL", "OFFERED", "REJECTED"]),
+  note: z.string().optional(),
+});

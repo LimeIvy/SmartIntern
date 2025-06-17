@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addCompanySchema } from "@/app/schemas/add_company_schema";
+import { addCompanySchema, addSelectionSchema } from "@/schemas/add_schema";
 
 const app = new Hono()
+  // 企業一覧取得
   .get("/", async (c) => {
     const user = await checkUser();
     if (!user) {
@@ -31,31 +32,7 @@ const app = new Hono()
     return c.json(companies);
   })
 
-  .get("/:id", async (c) => {
-    const user = await checkUser();
-    if (!user) {
-      return c.json({ error: "Unauthorized" }, 401);
-    }
-    const { id } = c.req.param();
-    const company = await db.company.findUnique({
-      where: { id, userId: user.id },
-      include: {
-        urls: true,
-        selections: {
-          include: {
-            schedules: true,
-          },
-        },
-      },
-    });
-
-    if (!company) {
-      return c.json({ error: "Not Found" }, 404);
-    }
-
-    return c.json(company);
-  })
-
+  // 企業追加
   .post("/", zValidator("json", addCompanySchema), async (c) => {
     const data = c.req.valid("json");
     const user = await checkUser();
@@ -87,6 +64,33 @@ const app = new Hono()
     return c.json(newCompany);
   })
 
+  // 企業詳細取得
+  .get("/:id", async (c) => {
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const { id } = c.req.param();
+    const company = await db.company.findUnique({
+      where: { id, userId: user.id },
+      include: {
+        urls: true,
+        selections: {
+          include: {
+            schedules: true,
+          },
+        },
+      },
+    });
+
+    if (!company) {
+      return c.json({ error: "Not Found" }, 404);
+    }
+
+    return c.json(company);
+  })
+
+  // 企業削除
   .delete("/:id", async (c) => {
     const user = await checkUser();
     if (!user) {
@@ -110,6 +114,31 @@ const app = new Hono()
     });
 
     return c.json(deletedCompany);
+  })
+
+  // 企業更新
+  .post("/:id/selection", zValidator("json", addSelectionSchema), async (c) => {
+    const data = c.req.valid("json");
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const { id } = c.req.param();
+
+    const newSelection = await db.$transaction(async (tx) => {
+      const selection = await tx.selection.create({
+        data: {
+          name: data.name,
+          type: data.type,
+          status: data.status,
+          note: data.note,
+          companyId: id,
+        },
+      });
+      return selection;
+    });
+
+    return c.json(newSelection);
   });
 
 export default app;

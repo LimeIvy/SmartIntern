@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,11 +17,39 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
   Flag,
   Building2,
   Plus,
   ExternalLink,
-  ChevronRight,
   Edit,
   Trash2,
   FileText,
@@ -28,6 +57,12 @@ import {
   Copy,
   ChevronDown,
   Save,
+  Check,
+  ChevronsUpDown,
+  Calendar,
+  Video,
+  MapPin,
+  Link,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { InferResponseType } from "hono";
@@ -37,11 +72,20 @@ import {
   translateSelectionType,
   translateStatus,
 } from "@/utils/statusTranslator";
+import { Status, SelectionType } from "@prisma/client";
+import { formattedDate } from "@/utils/formattedDate";
 
 type CompanyResponseType = InferResponseType<
   (typeof client.api.company)[":id"]["$get"],
   200
 >;
+
+type SelectionFormData = {
+  name: string;
+  type: SelectionType;
+  status: Status;
+  note: string;
+}
 
 interface EsStockItem {
   id: string;
@@ -56,6 +100,50 @@ const getStatusColor = (status: string) => {
   return "bg-yellow-100 text-yellow-800";
 };
 
+const selectionStatus = [
+  {
+    value: "INTERESTED",
+    label: "興味あり",
+  },
+  {
+    value: "APPLIED",
+    label: "応募済み",
+  },
+  {
+    value: "ES_SUBMITTED",
+    label: "ES提出済み",
+  },
+  {
+    value: "WEBTEST",
+    label: "Webテスト",
+  },
+  {
+    value: "INTERVIEW_1",
+    label: "一次面接",
+  },
+  {
+    value: "INTERVIEW_2",
+    label: "二次面接",
+  },
+
+  {
+    value: "INTERVIEW_3",
+    label: "三次面接以降",
+  },
+  {
+    value: "FINAL",
+    label: "最終面接",
+  },
+  {
+    value: "OFFERED",
+    label: "内定",
+  },
+  {
+    value: "REJECTED",
+    label: "お祈り",
+  },
+]
+
 export default function CompanyDetail() {
   const router = useRouter();
   const { companyId } = useParams();
@@ -64,6 +152,13 @@ export default function CompanyDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openAccordions, setOpenAccordions] = useState<string[]>([]);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [selectionFormData, setSelectionFormData] = useState<SelectionFormData>({
+    name: "",
+    type: "INTERNSHIP" as SelectionType,
+    status: "INTERESTED" as Status,
+    note: "",
+  });
 
   useEffect(() => {
     if (typeof companyId !== "string") {
@@ -106,6 +201,25 @@ export default function CompanyDetail() {
     );
   };
 
+  const handleAddSelection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await client.api.company[":id"].selection.$post({
+        param: { id: companyId as string },
+        json: selectionFormData,
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        console.error(error);
+        throw new Error("選考の追加に失敗しました。");
+      }
+      router.refresh();
+    } catch (error) {
+      console.error("選考の追加中にエラーが発生しました:", error);
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return (
       <div>
@@ -129,7 +243,7 @@ export default function CompanyDetail() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto w-full max-w-7xl p-8">
         {/* ヘッダー */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mt-10 mb-8 flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200">
               <Building2 className="h-8 w-8 text-gray-500" />
@@ -172,9 +286,9 @@ export default function CompanyDetail() {
         </div>
 
         {/* メイン2カラムレイアウト */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
           {/* 左列（2/3幅） */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-6">
             {/* 企業メモ */}
             <Card className="shadow-sm">
               <CardHeader>
@@ -221,11 +335,10 @@ export default function CompanyDetail() {
                           {item.title}
                         </span>
                         <ChevronDown
-                          className={`h-4 w-4 text-gray-500 transition-transform ${
-                            openAccordions.includes(item.id)
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`h-4 w-4 text-gray-500 transition-transform ${openAccordions.includes(item.id)
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-2">
@@ -263,34 +376,181 @@ export default function CompanyDetail() {
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center gap-2">
                     <Flag className="h-5 w-5 text-blue-600" />
-                    この企業の選考一覧
+                    選考一覧
                   </div>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    選考を追加
-                  </Button>
+                  <Dialog>
+
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="mr-2 h-4 w-4" />
+                        選考を追加
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>新しい選考を追加</DialogTitle>
+                        <DialogDescription>
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleAddSelection}>
+                        <div className="grid gap-4">
+                          <div className="grid gap-3">
+                            <Label htmlFor="name-1">選考名</Label>
+                            <Input
+                              name="name"
+                              value={selectionFormData.name}
+                              onChange={(e) => setSelectionFormData({ ...selectionFormData, name: e.target.value })}
+                            />
+                          </div>
+                          <div className="grid gap-3">
+                            <Label htmlFor="name-1">選考タイプ</Label>
+                            <div className="flex rounded-lg p-1 w-full justify-center bg-gray-100">
+                              <button
+                                type="button"
+                                onClick={() => setSelectionFormData({ ...selectionFormData, type: "INTERNSHIP" as SelectionType })}
+                                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "INTERNSHIP" as SelectionType
+                                  ? "bg-white text-blue-700 shadow-sm"
+                                  : "text-gray-600 hover:text-gray-900"
+                                  }`}
+                              >
+                                インターン
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setSelectionFormData({ ...selectionFormData, type: "FULLTIME" as SelectionType })}
+                                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "FULLTIME" as SelectionType
+                                  ? "bg-white text-blue-700 shadow-sm"
+                                  : "text-gray-600 hover:text-gray-900"
+                                  }`}
+                              >
+                                本選考
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid gap-3 mb-5">
+                            <Label htmlFor="username-1">選考のステータス</Label>
+                            <Popover open={statusOpen} onOpenChange={setStatusOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={statusOpen}
+                                  className="w-[200px] justify-between"
+                                >
+                                  {selectionFormData.status
+                                    ? selectionStatus.find((status) => status.value === selectionFormData.status)?.label
+                                    : "選択してください"}
+                                  <ChevronsUpDown className="opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[200px] p-0">
+                                <Command>
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {selectionStatus.map((status) => (
+                                        <CommandItem
+                                          key={status.value}
+                                          value={status.value}
+                                          onSelect={(currentValue) => {
+                                            setSelectionFormData({ ...selectionFormData, status: currentValue as Status })
+                                            setStatusOpen(false)
+                                          }}
+                                        >
+                                          {status.label}
+                                          <Check
+                                            className={cn(
+                                              "ml-auto",
+                                              selectionFormData.status === status.value ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <DialogClose asChild>
+                            <Button variant="outline">キャンセル</Button>
+                          </DialogClose>
+                          <Button type="submit">保存</Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {(company.selections ?? []).map((selection) => (
-                    <div
-                      key={selection.id}
-                      className="cursor-pointer rounded-lg border border-gray-200 p-4 transition-colors hover:border-gray-300"
-                    >
-                      <div className="mb-2 flex items-start justify-between">
-                        <h4 className="font-medium text-gray-900">
-                          {translateSelectionType(selection.type)}
-                        </h4>
-                        <ChevronRight className="mt-1 h-4 w-4 text-gray-400" />
-                      </div>
-                      <div className="mb-2 flex items-center gap-3">
-                        <Badge className={getStatusColor(selection.status)}>
-                          {translateStatus(selection.status)}
-                        </Badge>
-                      </div>
+                  {company.selections.length > 0 ? (
+                    <div className="space-y-6">
+                      {/* selectionsのループはここだけ */}
+                      {company.selections.map((selection, index) => (
+                        <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
+                          {/* 選考情報 */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-md text-gray-800">{selection.name}</h4>
+                              <span className="text-sm text-gray-500">({translateSelectionType(selection.type)})</span>
+                            </div>
+                            <Badge className={getStatusColor(selection.status)}>
+                              {translateStatus(selection.status)}
+                            </Badge>
+                          </div>
+
+                          {/* 紐づくスケジュール */}
+                          {selection.schedules.length > 0 ? (
+                            <div className="space-y-1 pl-4">
+                              {selection.schedules.map((schedule, sIndex) => (
+                                <div key={sIndex}>
+                                  <Accordion
+                                    type="single"
+                                    collapsible
+                                    className="w-full"
+                                  >
+                                    <AccordionItem value={schedule.id}>
+                                      <AccordionTrigger><p className="font-medium text-gray-700">{schedule.title}</p></AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                          <Calendar className="h-4 w-4" />
+                                          <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                          {/* 場所に応じてアイコンを出し分ける */}
+                                          {schedule.location?.toLowerCase().includes('オンライン') ? (
+                                            <Video className="h-4 w-4" />
+                                          ) : (
+                                            <MapPin className="h-4 w-4" />
+                                          )}
+                                          <span>{schedule.location}</span>
+                                        </div>
+                                        {schedule.url && (
+                                          <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                            <Link className="h-4 w-4" />
+                                            <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                          </div>
+                                        )}
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  </Accordion>
+
+
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 pl-4">この選考のスケジュールはありません。</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p>選考情報はありません。</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
