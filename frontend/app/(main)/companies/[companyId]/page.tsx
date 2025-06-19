@@ -49,6 +49,7 @@ import {
 import { Status, SelectionType } from "@prisma/client";
 import { formattedDate } from "@/utils/formattedDate";
 import AddSelection from "./_components/AddSelection";
+import AddSchedule from "./_components/AddSchedule";
 
 type CompanyResponseType = InferResponseType<
   (typeof client.api.company)[":id"]["$get"],
@@ -309,13 +310,16 @@ export default function CompanyDetail() {
                     <Flag className="h-5 w-5 text-blue-600" />
                     選考一覧
                   </div>
-                  <AddSelection
-                    selectionFormData={selectionFormData}
-                    setSelectionFormData={setSelectionFormData}
-                    statusOpen={statusOpen}
-                    setStatusOpen={setStatusOpen}
-                    handleAddSelection={handleAddSelection}
-                  />
+                  <div className="flex gap-2">
+                    <AddSelection
+                      selectionFormData={selectionFormData}
+                      setSelectionFormData={setSelectionFormData}
+                      statusOpen={statusOpen}
+                      setStatusOpen={setStatusOpen}
+                      handleAddSelection={handleAddSelection}
+                    />
+                    <AddSchedule selections={company.selections} />
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>

@@ -21,3 +21,14 @@ export const addSelectionSchema = z.object({
   status: z.enum(["INTERESTED", "APPLIED", "ES_SUBMITTED", "WEBTEST", "INTERVIEW_1", "INTERVIEW_2", "INTERVIEW_3", "FINAL", "OFFERED", "REJECTED"]),
   note: z.string().optional(),
 });
+
+export const addScheduleSchema = z.object({
+  title: z.string().min(1, { message: "スケジュールタイトルは必須です。" }),
+  startDate: z.string().min(1, { message: "開始日は必須です。" }),
+  endDate: z.string().min(1, { message: "終了日は必須です。" }),
+  startTime: z.string().min(1, { message: "開始時刻は必須です。" }),
+  endTime: z.string().min(1, { message: "終了時刻は必須です。" }),
+  format: z.enum(["ONLINE", "OFFLINE"]),
+  location: z.string().optional(),
+  memo: z.string().optional(),
+});
