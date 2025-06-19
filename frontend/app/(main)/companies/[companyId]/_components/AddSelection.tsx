@@ -150,10 +150,13 @@ export default function AddSelection({
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">キャンセル</Button>
-            </DialogClose>
-            <Button type="submit">保存</Button>
+            <div className="mt-3 flex gap-5">
+              <DialogClose asChild>
+                <Button variant="outline">キャンセル</Button>
+              </DialogClose>
+              <Button type="submit">保存</Button>
+            </div>
+            
           </DialogFooter>
         </form>
       </DialogContent>
