@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,34 +16,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Flag,
   Building2,
@@ -57,8 +33,6 @@ import {
   Copy,
   ChevronDown,
   Save,
-  Check,
-  ChevronsUpDown,
   Calendar,
   Video,
   MapPin,
@@ -74,6 +48,7 @@ import {
 } from "@/utils/statusTranslator";
 import { Status, SelectionType } from "@prisma/client";
 import { formattedDate } from "@/utils/formattedDate";
+import AddSelection from "./_components/AddSelection";
 
 type CompanyResponseType = InferResponseType<
   (typeof client.api.company)[":id"]["$get"],
@@ -99,50 +74,6 @@ const getStatusColor = (status: string) => {
   if (status.includes("INTERVIEW")) return "bg-blue-100 text-blue-800";
   return "bg-yellow-100 text-yellow-800";
 };
-
-const selectionStatus = [
-  {
-    value: "INTERESTED",
-    label: "興味あり",
-  },
-  {
-    value: "APPLIED",
-    label: "応募済み",
-  },
-  {
-    value: "ES_SUBMITTED",
-    label: "ES提出済み",
-  },
-  {
-    value: "WEBTEST",
-    label: "Webテスト",
-  },
-  {
-    value: "INTERVIEW_1",
-    label: "一次面接",
-  },
-  {
-    value: "INTERVIEW_2",
-    label: "二次面接",
-  },
-
-  {
-    value: "INTERVIEW_3",
-    label: "三次面接以降",
-  },
-  {
-    value: "FINAL",
-    label: "最終面接",
-  },
-  {
-    value: "OFFERED",
-    label: "内定",
-  },
-  {
-    value: "REJECTED",
-    label: "お祈り",
-  },
-]
 
 export default function CompanyDetail() {
   const router = useRouter();
@@ -378,110 +309,13 @@ export default function CompanyDetail() {
                     <Flag className="h-5 w-5 text-blue-600" />
                     選考一覧
                   </div>
-                  <Dialog>
-
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="mr-2 h-4 w-4" />
-                        選考を追加
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
-                      <DialogHeader>
-                        <DialogTitle>新しい選考を追加</DialogTitle>
-                        <DialogDescription>
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleAddSelection}>
-                        <div className="grid gap-4">
-                          <div className="grid gap-3">
-                            <Label htmlFor="name-1">選考名</Label>
-                            <Input
-                              name="name"
-                              value={selectionFormData.name}
-                              onChange={(e) => setSelectionFormData({ ...selectionFormData, name: e.target.value })}
-                            />
-                          </div>
-                          <div className="grid gap-3">
-                            <Label htmlFor="name-1">選考タイプ</Label>
-                            <div className="flex rounded-lg p-1 w-full justify-center bg-gray-100">
-                              <button
-                                type="button"
-                                onClick={() => setSelectionFormData({ ...selectionFormData, type: "INTERNSHIP" as SelectionType })}
-                                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "INTERNSHIP" as SelectionType
-                                  ? "bg-white text-blue-700 shadow-sm"
-                                  : "text-gray-600 hover:text-gray-900"
-                                  }`}
-                              >
-                                インターン
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setSelectionFormData({ ...selectionFormData, type: "FULLTIME" as SelectionType })}
-                                className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "FULLTIME" as SelectionType
-                                  ? "bg-white text-blue-700 shadow-sm"
-                                  : "text-gray-600 hover:text-gray-900"
-                                  }`}
-                              >
-                                本選考
-                              </button>
-                            </div>
-                          </div>
-                          <div className="grid gap-3 mb-5">
-                            <Label htmlFor="username-1">選考のステータス</Label>
-                            <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={statusOpen}
-                                  className="w-[200px] justify-between"
-                                >
-                                  {selectionFormData.status
-                                    ? selectionStatus.find((status) => status.value === selectionFormData.status)?.label
-                                    : "選択してください"}
-                                  <ChevronsUpDown className="opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[200px] p-0">
-                                <Command>
-                                  <CommandList>
-                                    <CommandGroup>
-                                      {selectionStatus.map((status) => (
-                                        <CommandItem
-                                          key={status.value}
-                                          value={status.value}
-                                          onSelect={(currentValue) => {
-                                            setSelectionFormData({ ...selectionFormData, status: currentValue as Status })
-                                            setStatusOpen(false)
-                                          }}
-                                        >
-                                          {status.label}
-                                          <Check
-                                            className={cn(
-                                              "ml-auto",
-                                              selectionFormData.status === status.value ? "opacity-100" : "opacity-0"
-                                            )}
-                                          />
-                                        </CommandItem>
-                                      ))}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <DialogClose asChild>
-                            <Button variant="outline">キャンセル</Button>
-                          </DialogClose>
-                          <Button type="submit">保存</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-
+                  <AddSelection
+                    selectionFormData={selectionFormData}
+                    setSelectionFormData={setSelectionFormData}
+                    statusOpen={statusOpen}
+                    setStatusOpen={setStatusOpen}
+                    handleAddSelection={handleAddSelection}
+                  />
                 </CardTitle>
               </CardHeader>
               <CardContent>
