@@ -82,7 +82,9 @@ model Schedule {
   id          String        @id @default(cuid())
   title       String        // 例：「一次面接」「ES提出締切」
   startDate   DateTime      // 予定の開始日時
+  startTime   String?       // 予定の開始時間
   endDate     DateTime     // 予定の終了日時
+  endTime     String?       // 予定の終了時間
   isConfirmed Boolean       @default(true) // 確定 or 未確定フラグ
   location    String?       // 場所
   url         String?       // スケジュールのURL

@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addCompanySchema, addSelectionSchema } from "@/schemas/add_schema";
+import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/add_schema";
 
 const app = new Hono()
   // 企業一覧取得
@@ -139,6 +139,36 @@ const app = new Hono()
     });
 
     return c.json(newSelection);
+  })
+
+  // 選考スケジュール追加
+  .post("/:id/schedule", zValidator("json", addScheduleSchema), async (c) => {
+    const data = c.req.valid("json");
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const { id } = c.req.param();
+
+    const newSchedule = await db.$transaction(async (tx) => {
+      const schedule = await tx.schedule.create({
+        data: {
+          title: data.title,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          startTime: data.startTime,
+          endTime: data.endTime,
+          location: data.location,
+          url: data.url,
+          note: data.note,
+          isConfirmed: data.isConfirmed,
+          selectionId: id,
+        },
+      });
+      return schedule;
+    });
+
+    return c.json(newSchedule);
   });
 
 export default app;
