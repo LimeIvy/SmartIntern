@@ -11,12 +11,20 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
-import { ChevronsUpDown, Check, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Check, Plus } from "lucide-react";
+import { useState } from "react";
+import { addSelectionSchema } from "@/schemas/add_schema";
+
 import type { Status, SelectionType } from "@prisma/client";
 
 // 選考ステータス一覧
@@ -51,12 +59,25 @@ type AddSelectionProps = {
 export default function AddSelection({
   selectionFormData,
   setSelectionFormData,
-  statusOpen,
-  setStatusOpen,
   handleAddSelection,
 }: AddSelectionProps) {
+  const [error, setError] = useState<string | null>(null);
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const result = addSelectionSchema.safeParse(selectionFormData);
+    if (!result.success) {
+      const nameError = result.error.issues.find(issue => issue.path[0] === "name")?.message;
+      setError(nameError ?? null);
+      return;
+    }
+    setError(null);
+    handleAddSelection(e);
+  };
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={(open) => { if (open) setError(null); }}>
       <DialogTrigger asChild>
         <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
           <Plus className="mr-2 h-4 w-4" />
@@ -68,7 +89,7 @@ export default function AddSelection({
           <DialogTitle>新しい選考を追加</DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleAddSelection}>
+        <form onSubmit={onSubmit}>
           <div className="grid gap-4">
             <div className="grid gap-3">
               <Label htmlFor="name-1">選考名</Label>
@@ -77,6 +98,9 @@ export default function AddSelection({
                 value={selectionFormData.name}
                 onChange={(e) => setSelectionFormData({ ...selectionFormData, name: e.target.value })}
               />
+              {error && (
+                <p className="text-red-500 text-xs">{error}</p>
+              )}
             </div>
             <div className="grid gap-3">
               <Label htmlFor="type-1">選考タイプ</Label>
@@ -99,47 +123,30 @@ export default function AddSelection({
             </div>
             <div className="grid gap-3 mb-5">
               <Label htmlFor="status-1">選考のステータス</Label>
-              <Popover open={statusOpen} onOpenChange={setStatusOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={statusOpen}
-                    className="w-[200px] justify-between"
-                  >
+              <Select
+                value={selectionFormData.status}
+                onValueChange={(value) => setSelectionFormData({ ...selectionFormData, status: value as Status })}
+              >
+                <SelectTrigger className="w-full justify-between">
+                  <SelectValue placeholder="選択してください">
                     {selectionFormData.status
                       ? selectionStatus.find((status) => status.value === selectionFormData.status)?.label
-                      : "選択してください"}
-                    <ChevronsUpDown className="opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command>
-                    <CommandList>
-                      <CommandGroup>
-                        {selectionStatus.map((status) => (
-                          <CommandItem
-                            key={status.value}
-                            value={status.value}
-                            onSelect={(currentValue) => {
-                              setSelectionFormData({ ...selectionFormData, status: currentValue as Status });
-                              setStatusOpen(false);
-                            }}
-                          >
-                            {status.label}
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                selectionFormData.status === status.value ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                      : '選択してください'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectGroup>
+                    {selectionStatus.map((status) => (
+                      <SelectItem key={status.value} value={status.value}>
+                        {status.label}
+                        {selectionFormData.status === status.value && (
+                          <Check className="ml-auto h-4 w-4 opacity-100" />
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
