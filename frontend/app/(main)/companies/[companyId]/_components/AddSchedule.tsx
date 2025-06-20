@@ -3,72 +3,48 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { addScheduleSchema } from "@/schemas/add_schema";
-import type { Status, SelectionType } from "@prisma/client";
 import { CheckCircle2, X } from "lucide-react";
-
-// company.selectionsの型に合わせる
-export type SelectionForDialog = {
-  id: string;
-  name: string;
-  note: string | null;
-  createdAt: string;
-  updatedAt: string;
-  type: SelectionType;
-  status: Status;
-  esText: string | null;
-  companyId: string;
-};
+import { client } from "@/lib/hono";
+import { z } from "zod";
 
 type AddScheduleProps = {
-  selections: SelectionForDialog[];
+  selectionId: string;
+  onScheduleAdded: () => void;
 };
 
-export default function AddSchedule({ selections }: AddScheduleProps) {
+type FormState = Omit<z.infer<typeof addScheduleSchema>, "selectionId">;
+
+const INITIAL_STATE: FormState = {
+  title: "",
+  startDate: "",
+  endDate: "",
+  startTime: "",
+  endTime: "",
+  isConfirmed: false,
+  location: "",
+  url: "",
+  note: "",
+};
+
+export default function AddSchedule({ selectionId, onScheduleAdded }: AddScheduleProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const [selectedSelectionId, setSelectedSelectionId] = useState<string>("");
-  const [form, setForm] = useState({
-    title: "",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-    isConfirmed: false,
-    location: "",
-    url: "",
-    note: "",
-  });
+  const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // step1のバリデーション
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!selectedSelectionId) newErrors.selection = "選考を選択してください。";
     if (!form.title) newErrors.title = "スケジュールタイトルは必須です。";
     if (!form.startDate) newErrors.startDate = "開始日は必須です。";
     if (!form.startTime) newErrors.startTime = "開始時刻は必須です。";
     if (!form.endDate) newErrors.endDate = "終了日は必須です。";
     if (!form.endTime) newErrors.endTime = "終了時刻は必須です。";
-    return newErrors;
-  };
-
-  // step2のバリデーション（全体）
-  const validateAll = () => {
-    const result = addScheduleSchema.safeParse(form);
-    const newErrors: { [key: string]: string } = {};
-    if (!selectedSelectionId) newErrors.selection = "選考を選択してください。";
-    if (!result.success) {
-      result.error.issues.forEach(issue => {
-        if (issue.path[0]) newErrors[issue.path[0]] = issue.message;
-      });
-    }
     return newErrors;
   };
 
@@ -80,71 +56,56 @@ export default function AddSchedule({ selections }: AddScheduleProps) {
       setStep(2);
     }
   };
-
-  const handleBack = () => {
-    setStep(1);
-    setErrors({});
-  };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
-    const allErrors = validateAll();
-    setErrors(allErrors);
-    if (Object.keys(allErrors).length > 0) return;
 
+    const result = addScheduleSchema.safeParse(form);
+    
+    if (!result.success) {
+      const newErrors: { [key: string]: string } = {};
+      result.error.issues.forEach(issue => {
+        if (issue.path[0]) newErrors[issue.path[0]] = issue.message;
+      });
+      setErrors(newErrors);
+      return;
+    }
+    
+    setErrors({});
     setIsLoading(true);
     try {
-      // 選考IDが必要
-      const selectionId = selectedSelectionId;
-      const toISODate = (dateStr: string) => dateStr ? new Date(dateStr).toISOString() : "";
-
-      const payload = {
-        ...form,
-        startDate: toISODate(form.startDate),
-        endDate: toISODate(form.endDate),
-      };
-
-      const res = await fetch(`/api/company/${selectionId}/schedule`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const res = await client.api.company[':id'].schedule.$post({
+        param: {
+          id: selectionId,
+        },
+        json: form,
       });
+
       if (!res.ok) {
         const data = await res.json();
-        setApiError(data?.error || "サーバーエラーが発生しました");
-        setIsLoading(false);
-        return;
+        const message = (data && typeof data === 'object' && 'error' in data && typeof data.error === 'string')
+          ? data.error
+          : "スケジュールの追加に失敗しました。";
+        throw new Error(message);
       }
-      // 成功時
+      
+      onScheduleAdded();
       setOpen(false);
       setStep(1);
-      setForm({
-        title: "",
-        startDate: "",
-        endDate: "",
-        startTime: "",
-        endTime: "",
-        isConfirmed: false,
-        location: "",
-        url: "",
-        note: "",
-      });
-      setSelectedSelectionId("");
+      setForm(INITIAL_STATE);
       setErrors({});
-    } catch {
-      setApiError("通信エラーが発生しました");
+    } catch(err) {
+      setApiError(err instanceof Error ? err.message : "通信エラーが発生しました");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Input要素の変更をまとめて処理する共通ハンドラ
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // isConfirmedの状態を更新するための専用ハンドラ
   const handleIsConfirmedChange = (isConfirmed: boolean) => {
     setForm(prev => ({ ...prev, isConfirmed }));
   };
@@ -152,13 +113,13 @@ export default function AddSchedule({ selections }: AddScheduleProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setStep(1); setErrors({}); setApiError(null); } }}>
       <DialogTrigger asChild>
-        <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4" />
-          <span className="text-base">予定を追加</span>
+        <Button size="sm" variant="outline">
+          <Plus className="h-4 w-4 mr-2" />
+          予定を追加
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        {/* ステップインジケーター */}
+        {/* Step indicator */}
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className={`flex flex-col items-center ${step === 1 ? 'text-blue-600 font-bold' : 'text-gray-400'}`}>
             <div className={`rounded-full w-6 h-6 flex items-center justify-center border-2 ${step === 1 ? 'border-blue-600 bg-blue-100' : 'border-gray-300 bg-white'}`}>1</div>
@@ -181,154 +142,73 @@ export default function AddSchedule({ selections }: AddScheduleProps) {
             {step === 1 && (
               <>
                 <div className="grid gap-2">
-                  <Label className="flex items-center">選考<span className="text-red-500">*</span></Label>
-                  <Select value={selectedSelectionId} onValueChange={setSelectedSelectionId}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="選考を選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {selections.map(sel => (
-                          <SelectItem key={sel.id} value={sel.id}>{sel.name}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {errors.selection && <p className="text-red-500 text-xs">{errors.selection}</p>}
-                </div>
-
-                <div className="grid gap-2">
                   <Label className="flex items-center" htmlFor="title">スケジュールタイトル<span className="text-red-500">*</span></Label>
-                  <Input
-                    id="title"
-                    name="title" // name属性を追加
-                    value={form.title}
-                    onChange={handleChange} // 共通ハンドラを使用
-                  />
+                  <Input id="title" name="title" value={form.title} onChange={handleChange} />
                   {errors.title && <p className="text-red-500 text-xs">{errors.title}</p>}
                 </div>
-
-                {/* 日程2カラム */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-5">
-                    <div className="grid gap-2">
-                      <Label className="flex items-center" htmlFor="startDate">開始日<span className="text-red-500">*</span></Label>
-                      <Input
-                        type="date"
-                        id="startDate"
-                        name="startDate" // name属性を追加
-                        value={form.startDate}
-                        onChange={handleChange} // 共通ハンドラを使用
-                      />
-                      {errors.startDate && <p className="text-red-500 text-xs">{errors.startDate}</p>}
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="flex items-center" htmlFor="endDate">終了日<span className="text-red-500">*</span></Label>
-                      <Input
-                        type="date"
-                        id="endDate"
-                        name="endDate" // name属性を追加
-                        value={form.endDate}
-                        onChange={handleChange} // 共通ハンドラを使用
-                      />
-                      {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
-                    </div>
+                  <div className="grid gap-2">
+                    <Label className="flex items-center" htmlFor="startDate">開始日<span className="text-red-500">*</span></Label>
+                    <Input type="date" id="startDate" name="startDate" value={form.startDate} onChange={handleChange} />
+                    {errors.startDate && <p className="text-red-500 text-xs">{errors.startDate}</p>}
                   </div>
-                  <div className="grid gap-5">
-                    <div className="grid gap-2">
-                      <Label className="flex items-center" htmlFor="startTime">開始時刻<span className="text-red-500">*</span></Label>
-                      <Input
-                        type="time"
-                        id="startTime"
-                        name="startTime" // name属性を追加
-                        value={form.startTime}
-                        onChange={handleChange} // 共通ハンドラを使用
-                      />
-                      {errors.startTime && <p className="text-red-500 text-xs">{errors.startTime}</p>}
-                    </div>
-                    <div className="grid gap-2">
-                      <Label className="flex items-center" htmlFor="endTime">終了時刻<span className="text-red-500">*</span></Label>
-                      <Input
-                        type="time"
-                        id="endTime"
-                        name="endTime" // name属性を追加
-                        value={form.endTime}
-                        onChange={handleChange} // 共通ハンドラを使用
-                      />
-                      {errors.endTime && <p className="text-red-500 text-xs">{errors.endTime}</p>}
-                    </div>
+                   <div className="grid gap-2">
+                    <Label className="flex items-center" htmlFor="startTime">開始時刻<span className="text-red-500">*</span></Label>
+                    <Input type="time" id="startTime" name="startTime" value={form.startTime} onChange={handleChange} />
+                    {errors.startTime && <p className="text-red-500 text-xs">{errors.startTime}</p>}
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label className="flex items-center">予定の状態<span className="text-red-500">*</span></Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* 仮予定ボタン */}
-                    <button
-                      type="button"
-                      onClick={() => handleIsConfirmedChange(false)}
-                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border text-center transition-colors
-          ${!form.isConfirmed
-                          ? 'border-red-400 bg-red-50 text-red-500 shadow-sm'
-                          : 'border-gray-200 bg-transparent hover:bg-gray-50'
-                        }`}
-                    >
-                      <X className="h-4 w-4" />
-                      <p className="font-medium text-sm">未確定</p>
-                    </button>
-
-                    {/* 確定予定ボタン */}
-                    <button
-                      type="button"
-                      onClick={() => handleIsConfirmedChange(true)}
-                      className={`flex flex-col items-center justify-center gap-1 p-2 rounded-lg border text-center transition-colors
-                        ${form.isConfirmed
-                          ? 'border-green-600 bg-green-50 text-green-600 shadow-sm'
-                          : 'border-gray-200 bg-transparent hover:bg-gray-50'
-                        }`}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <p className="font-medium text-sm">確定</p>
-                    </button>
+                 <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label className="flex items-center" htmlFor="endDate">終了日<span className="text-red-500">*</span></Label>
+                    <Input type="date" id="endDate" name="endDate" value={form.endDate} onChange={handleChange} />
+                    {errors.endDate && <p className="text-red-500 text-xs">{errors.endDate}</p>}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="flex items-center" htmlFor="endTime">終了時刻<span className="text-red-500">*</span></Label>
+                    <Input type="time" id="endTime" name="endTime" value={form.endTime} onChange={handleChange} />
+                    {errors.endTime && <p className="text-red-500 text-xs">{errors.endTime}</p>}
                   </div>
                 </div>
               </>
             )}
             {step === 2 && (
               <>
-                <div className="grid gap-3">
-                  <Label>場所</Label>
-                  <Input value={form.location} placeholder="東京都、 Zoomなど" onChange={e => setForm({ ...form, location: e.target.value })} />
-                  {errors.location && <p className="text-red-500 text-xs">{errors.location}</p>}
+                <div className="grid gap-2">
+                  <Label htmlFor="location">場所</Label>
+                  <Input id="location" name="location" value={form.location} onChange={handleChange} />
                 </div>
-                <div className="grid gap-3">
-                  <Label>URL</Label>
-                  <Input value={form.url} placeholder="https://..." onChange={e => setForm({ ...form, url: e.target.value })} />
-                  {errors.url && <p className="text-red-500 text-xs">{errors.url}</p>}
+                <div className="grid gap-2">
+                  <Label htmlFor="url">URL</Label>
+                  <Input id="url" name="url" value={form.url} onChange={handleChange} />
                 </div>
-                <div className="grid gap-3">
-                  <Label>メモ</Label>
-                  <Input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} />
-                  {errors.note && <p className="text-red-500 text-xs">{errors.note}</p>}
+                <div className="grid gap-2">
+                  <Label htmlFor="note">メモ</Label>
+                  <textarea id="note" name="note" value={form.note} onChange={handleChange} className="w-full p-2 border rounded-md" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <Label>予定は確定していますか？</Label>
+                  <div className="flex rounded-lg p-1 bg-gray-100">
+                    <button type="button" onClick={() => handleIsConfirmedChange(true)} className={`flex items-center gap-1 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${form.isConfirmed ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                      <CheckCircle2 className="h-4 w-4" /> 確定
+                    </button>
+                    <button type="button" onClick={() => handleIsConfirmedChange(false)} className={`flex items-center gap-1 rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${!form.isConfirmed ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}>
+                      <X className="h-4 w-4" /> 未確定
+                    </button>
+                  </div>
                 </div>
               </>
             )}
-            {apiError && (
-              <p className="text-red-500 text-xs">{apiError}</p>
-            )}
           </div>
+          {apiError && <p className="text-red-500 text-xs mt-2 text-center">{apiError}</p>}
           <DialogFooter>
-            <div className="mt-6 flex gap-5">
-              {step === 2 && (
-                <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>戻る</Button>
-              )}
+            <div className="flex w-full justify-between mt-4">
               {step === 1 ? (
-                <Button type="submit" disabled={isLoading}>次へ</Button>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>キャンセル</Button>
               ) : (
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading && <span className="animate-spin mr-2 w-4 h-4 border-2 border-white border-t-transparent rounded-full inline-block" />}
-                  保存
-                </Button>
+                <Button type="button" variant="outline" onClick={() => setStep(1)}>戻る</Button>
               )}
+              <Button type="submit" disabled={isLoading}>{step === 1 ? '次へ' : (isLoading ? '保存中...' : '保存')}</Button>
             </div>
           </DialogFooter>
         </form>

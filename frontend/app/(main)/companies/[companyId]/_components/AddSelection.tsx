@@ -24,7 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Check, Plus } from "lucide-react";
 import { useState } from "react";
 import { addSelectionSchema } from "@/schemas/add_schema";
-
+import { useParams } from "next/navigation";
+import { client } from "@/lib/hono";
 import type { Status, SelectionType } from "@prisma/client";
 
 // 選考ステータス一覧
@@ -48,36 +49,65 @@ type SelectionFormData = {
   note: string;
 };
 
-type AddSelectionProps = {
-  selectionFormData: SelectionFormData;
-  setSelectionFormData: (data: SelectionFormData) => void;
-  statusOpen: boolean;
-  setStatusOpen: (open: boolean) => void;
-  handleAddSelection: (e: React.FormEvent) => void;
+const INITIAL_STATE: SelectionFormData = {
+  name: "",
+  type: "INTERNSHIP",
+  status: "INTERESTED",
+  note: "",
 };
 
-export default function AddSelection({
-  selectionFormData,
-  setSelectionFormData,
-  handleAddSelection,
-}: AddSelectionProps) {
+type AddSelectionProps = {
+  onSelectionAdded: () => void;
+};
+
+export default function AddSelection({ onSelectionAdded }: AddSelectionProps) {
+  const { companyId } = useParams();
+  const [isOpen, setIsOpen] = useState(false);
+  const [formData, setFormData] = useState<SelectionFormData>(INITIAL_STATE);
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const result = addSelectionSchema.safeParse(selectionFormData);
+    const result = addSelectionSchema.safeParse(formData);
     if (!result.success) {
       const nameError = result.error.issues.find(issue => issue.path[0] === "name")?.message;
       setError(nameError ?? null);
       return;
     }
-    setError(null);
-    handleAddSelection(e);
+
+    try {
+      const res = await client.api.company[":id"].selection.$post({
+        param: { id: companyId as string },
+        json: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        const message = (errorData && typeof errorData === 'object' && 'error' in errorData && typeof errorData.error === 'string')
+          ? errorData.error
+          : "選考の追加に失敗しました。";
+        throw new Error(message);
+      }
+      
+      onSelectionAdded();
+      setIsOpen(false);
+      setFormData(INITIAL_STATE);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "不明なエラーが発生しました。");
+    }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (open) {
+      setError(null);
+      setFormData(INITIAL_STATE);
+    }
+    setIsOpen(open);
+  }
+
   return (
-    <Dialog onOpenChange={(open) => { if (open) setError(null); }}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4" />
@@ -89,14 +119,14 @@ export default function AddSelection({
           <DialogTitle>新しい選考を追加</DialogTitle>
           <DialogDescription></DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit}>
+        <form onSubmit={handleSubmit}>
           <div className="grid gap-4">
             <div className="grid gap-3">
               <Label htmlFor="name-1">選考名</Label>
               <Input
                 name="name"
-                value={selectionFormData.name}
-                onChange={(e) => setSelectionFormData({ ...selectionFormData, name: e.target.value })}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
               {error && (
                 <p className="text-red-500 text-xs">{error}</p>
@@ -107,15 +137,15 @@ export default function AddSelection({
               <div className="flex rounded-lg p-1 w-full justify-center bg-gray-100">
                 <button
                   type="button"
-                  onClick={() => setSelectionFormData({ ...selectionFormData, type: "INTERNSHIP" as SelectionType })}
-                  className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "INTERNSHIP" ? "bg-white text-blue-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+                  onClick={() => setFormData({ ...formData, type: "INTERNSHIP" as SelectionType })}
+                  className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${formData.type === "INTERNSHIP" ? "bg-white text-blue-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
                 >
                   インターン
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectionFormData({ ...selectionFormData, type: "FULLTIME" as SelectionType })}
-                  className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${selectionFormData.type === "FULLTIME" ? "bg-white text-blue-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
+                  onClick={() => setFormData({ ...formData, type: "FULLTIME" as SelectionType })}
+                  className={`rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-colors ${formData.type === "FULLTIME" ? "bg-white text-blue-700 shadow-sm" : "text-gray-600 hover:text-gray-900"}`}
                 >
                   本選考
                 </button>
@@ -124,13 +154,13 @@ export default function AddSelection({
             <div className="grid gap-3 mb-5">
               <Label htmlFor="status-1">選考のステータス</Label>
               <Select
-                value={selectionFormData.status}
-                onValueChange={(value) => setSelectionFormData({ ...selectionFormData, status: value as Status })}
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value as Status })}
               >
                 <SelectTrigger className="w-full justify-between">
                   <SelectValue placeholder="選択してください">
-                    {selectionFormData.status
-                      ? selectionStatus.find((status) => status.value === selectionFormData.status)?.label
+                    {formData.status
+                      ? selectionStatus.find((status) => status.value === formData.status)?.label
                       : '選択してください'}
                   </SelectValue>
                 </SelectTrigger>
@@ -139,7 +169,7 @@ export default function AddSelection({
                     {selectionStatus.map((status) => (
                       <SelectItem key={status.value} value={status.value}>
                         {status.label}
-                        {selectionFormData.status === status.value && (
+                        {formData.status === status.value && (
                           <Check className="ml-auto h-4 w-4 opacity-100" />
                         )}
                       </SelectItem>
@@ -152,11 +182,10 @@ export default function AddSelection({
           <DialogFooter>
             <div className="mt-3 flex gap-5">
               <DialogClose asChild>
-                <Button variant="outline">キャンセル</Button>
+                <Button type="button" variant="outline">キャンセル</Button>
               </DialogClose>
               <Button type="submit">保存</Button>
             </div>
-            
           </DialogFooter>
         </form>
       </DialogContent>

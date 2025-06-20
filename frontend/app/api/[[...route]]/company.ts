@@ -40,16 +40,16 @@ const app = new Hono()
     }
 
     const newCompany = await db.company.create({
-        data: {
-          name: data.name,
-          note: data.note,
-          userId: user.id,
-          industry: data.industry,
-          logoUrl: data.logoUrl,
-          hpUrl: data.hpUrl,
-          mypageUrl: data.mypageUrl,
-        },
-      });
+      data: {
+        name: data.name,
+        note: data.note,
+        userId: user.id,
+        industry: data.industry,
+        logoUrl: data.logoUrl,
+        hpUrl: data.hpUrl,
+        mypageUrl: data.mypageUrl,
+      },
+    });
     return c.json(newCompany);
   })
 
@@ -132,18 +132,40 @@ const app = new Hono()
   // 選考スケジュール追加
   .post("/:id/schedule", zValidator("json", addScheduleSchema), async (c) => {
     const data = c.req.valid("json");
+    console.log("SCHEDULE_ADD_API: Received data:", data);
+
     const user = await checkUser();
     if (!user) {
       return c.json({ error: "Unauthorized" }, 401);
     }
     const { id } = c.req.param();
+    console.log("SCHEDULE_ADD_API: Received selectionId from param:", id);
+
+    const selectionExists = await db.selection.findFirst({
+      where: {
+        id: id,
+        company: {
+          userId: user.id,
+        },
+      },
+    });
+
+    if (!selectionExists) {
+      console.error(
+        `SCHEDULE_ADD_API: Attempt to add schedule to non-existent or unauthorized selection ID: ${id}`
+      );
+      return c.json({ error: "Selection not found or unauthorized" }, 404);
+    }
 
     const newSchedule = await db.$transaction(async (tx) => {
+      const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
+      const endDateTime = new Date(`${data.endDate}T${data.endTime}`);
+
       const schedule = await tx.schedule.create({
         data: {
           title: data.title,
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: startDateTime,
+          endDate: endDateTime,
           startTime: data.startTime,
           endTime: data.endTime,
           location: data.location,
@@ -155,7 +177,6 @@ const app = new Hono()
       });
       return schedule;
     });
-
     return c.json(newSchedule);
   });
 
