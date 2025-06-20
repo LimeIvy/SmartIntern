@@ -35,7 +35,7 @@ import {
   Save,
   Calendar,
   MapPin,
-  Link,
+  Link2,
   NotepadText,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
@@ -50,6 +50,7 @@ import { Status, SelectionType } from "@prisma/client";
 import { formattedDate } from "@/utils/formattedDate";
 import AddSelection from "./_components/AddSelection";
 import AddSchedule from "./_components/AddSchedule";
+import Link from "next/link";
 
 type CompanyResponseType = InferResponseType<
   (typeof client.api.company)[":id"]["$get"],
@@ -182,28 +183,32 @@ export default function CompanyDetail() {
               <h2 className="mb-2 text-4xl font-bold text-gray-900">
                 {company.name}
               </h2>
-              {company.hpUrl && (
-                <a
-                  href={company.hpUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800"
-                >
-                  {company.hpUrl}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
-              {company.mypageUrl && (
-                <a
-                  href={company.mypageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800"
-                >
-                  {company.mypageUrl}
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              )}
+              <div className="mt-2 space-y-1 text-lg">
+                {company.hpUrl && (
+                  <div className="flex items-center">
+                    <Link
+                      href={company.hpUrl}
+                      target="_blank"
+                      className="flex min-w-0 items-center gap-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <span className="truncate">公式サイト</span>
+                      <ExternalLink className="h-4 w-4 shrink-0" />
+                    </Link>
+                  </div>
+                )}
+                {company.mypageUrl && (
+                  <div className="flex items-center">
+                    <Link
+                      href={company.mypageUrl}
+                      target="_blank"
+                      className="flex min-w-0 items-center gap-1 text-blue-600 hover:text-blue-800"
+                    >
+                      <span className="truncate">マイページ</span>
+                      <ExternalLink className="h-4 w-4 shrink-0" />
+                    </Link>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex gap-2">
@@ -306,8 +311,8 @@ export default function CompanyDetail() {
                                         )}
                                         {schedule.url && (
                                           <div className="flex items-center gap-2 mt-1 text-base text-gray-600">
-                                            <Link className="h-4 w-4" />
-                                            <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                            <Link2 className="h-4 w-4" />
+                                            <Link href={schedule.url} target="_blank" className="text-blue-600 hover:underline">{schedule.url}</Link>
                                           </div>
                                         )}
                                         {schedule.note && (

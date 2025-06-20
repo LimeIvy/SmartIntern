@@ -19,12 +19,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Building2, Search, MoreVertical, Trash2, Eye, Calendar, MapPin, Link, NotepadText, ExternalLink } from "lucide-react";
+import { Building2, Search, MoreVertical, Trash2, Eye, Calendar, MapPin, Link2, NotepadText, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formattedDate } from "@/utils/formattedDate";
 import AddCompany from "./_components/add-company";
+import Link from "next/link";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
@@ -129,22 +130,28 @@ export default function CompaniesList() {
               <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gray-200">
                 <Building2 className="h-6 w-6 text-gray-500" />
               </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="mb-1 truncate text-lg font-semibold text-gray-900">
+              <div className="min-w-0 flex flex-col">
+                <h3 className="truncate text-2xl font-bold text-gray-900">
                   {company.name}
                 </h3>
-                {company.hpUrl && (
-                  <a href={company.hpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800">
-                    {company.hpUrl}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
-                {company.mypageUrl && (
-                  <a href={company.mypageUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800">
-                    {company.mypageUrl}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                <div className="flex items-center gap-2">
+                  {company.hpUrl && (
+                    <div className="flex items-center text-sm">
+                      <Link href={company.hpUrl} target="_blank" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                        公式サイト
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  )}
+                  {company.mypageUrl && (
+                    <div className="flex items-center text-sm">
+                      <Link href={company.mypageUrl} target="_blank" className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800">
+                        マイページ
+                          <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -226,15 +233,15 @@ export default function CompaniesList() {
                                     <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
                                   </div>
                                   {schedule.location && (
-                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                    <MapPin className="h-4 w-4" />
+                                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                      <MapPin className="h-4 w-4" />
                                       <span>{schedule.location}</span>
                                     </div>
                                   )}
                                   {schedule.url && (
                                     <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                      <Link className="h-4 w-4" />
-                                      <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                      <Link2 className="h-4 w-4" />
+                                      <Link href={schedule.url} target="_blank" className="text-blue-600 hover:underline">{schedule.url}</Link>
                                     </div>
                                   )}
                                   {schedule.note && (
