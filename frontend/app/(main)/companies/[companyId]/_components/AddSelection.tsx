@@ -79,9 +79,9 @@ export default function AddSelection({
   return (
     <Dialog onOpenChange={(open) => { if (open) setError(null); }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="mr-2 h-4 w-4" />
-          選考を追加
+        <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="h-4 w-4" />
+          <span className="text-base">選考を追加</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

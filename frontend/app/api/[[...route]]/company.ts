@@ -22,7 +22,6 @@ const app = new Hono()
             schedules: true,
           },
         },
-        urls: true,
       },
       orderBy: {
         updatedAt: "desc",
@@ -40,27 +39,17 @@ const app = new Hono()
       return c.json({ error: "Unauthorized" }, 401);
     }
 
-    const newCompany = await db.$transaction(async (tx) => {
-      const company = await tx.company.create({
+    const newCompany = await db.company.create({
         data: {
           name: data.name,
           note: data.note,
           userId: user.id,
           industry: data.industry,
           logoUrl: data.logoUrl,
+          hpUrl: data.hpUrl,
+          mypageUrl: data.mypageUrl,
         },
       });
-
-      await tx.companyUrl.createMany({
-        data: data.urls.map((url) => ({
-          ...url,
-          companyId: company.id,
-        })),
-      });
-
-      return company;
-    });
-
     return c.json(newCompany);
   })
 
@@ -74,7 +63,6 @@ const app = new Hono()
     const company = await db.company.findUnique({
       where: { id, userId: user.id },
       include: {
-        urls: true,
         selections: {
           include: {
             schedules: true,

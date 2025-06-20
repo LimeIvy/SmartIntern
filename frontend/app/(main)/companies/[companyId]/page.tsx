@@ -34,9 +34,9 @@ import {
   ChevronDown,
   Save,
   Calendar,
-  Video,
   MapPin,
   Link,
+  NotepadText,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { InferResponseType } from "hono";
@@ -168,9 +168,7 @@ export default function CompanyDetail() {
     return <div>企業が見つかりません。</div>;
   }
 
-  const esStock: EsStockItem[] = []; // 実際にはAPIなどで取得する
-  const primaryUrl = company.urls?.[0]?.url ?? null;
-
+  const esStock: EsStockItem[] = [];
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto w-full max-w-7xl p-8">
@@ -181,17 +179,28 @@ export default function CompanyDetail() {
               <Building2 className="h-8 w-8 text-gray-500" />
             </div>
             <div>
-              <h2 className="mb-2 text-3xl font-bold text-gray-900">
+              <h2 className="mb-2 text-4xl font-bold text-gray-900">
                 {company.name}
               </h2>
-              {primaryUrl && (
+              {company.hpUrl && (
                 <a
-                  href={primaryUrl}
+                  href={company.hpUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800"
                 >
-                  {primaryUrl}
+                  {company.hpUrl}
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              {company.mypageUrl && (
+                <a
+                  href={company.mypageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800"
+                >
+                  {company.mypageUrl}
                   <ExternalLink className="h-4 w-4" />
                 </a>
               )}
@@ -200,19 +209,19 @@ export default function CompanyDetail() {
           <div className="flex gap-2">
             <Button
               variant="outline"
-              size="sm"
+              size="lg"
               onClick={() => router.push(`/companies/${companyId}/edit`)}
             >
-              <Edit className="mr-2 h-4 w-4" />
-              編集
+              <Edit className="h-4 w-4" />
+              <span className="text-lg">編集</span>
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size="lg"
               className="text-red-600 hover:text-red-700"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              削除
+              <Trash2 className="h-4 w-4" />
+              <span className="text-lg">削除</span>
             </Button>
           </div>
         </div>
@@ -221,36 +230,117 @@ export default function CompanyDetail() {
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
           {/* 左列（2/3幅） */}
           <div className="xl:col-span-2 space-y-6">
-            {/* 企業メモ */}
+            {/* 選考一覧 */}
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <StickyNote className="h-5 w-5 text-blue-600" />
-                  企業メモ
+                <CardTitle className="flex items-center justify-between text-xl">
+                  <div className="flex items-center gap-2">
+                    <Flag className="h-6 w-6 text-blue-600" />
+                    <span className="text-2xl">選考一覧</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <AddSelection
+                      selectionFormData={selectionFormData}
+                      setSelectionFormData={setSelectionFormData}
+                      statusOpen={statusOpen}
+                      setStatusOpen={setStatusOpen}
+                      handleAddSelection={handleAddSelection}
+                    />
+                    <AddSchedule selections={company.selections} />
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea
-                  value={companyMemo}
-                  onChange={(e) => setCompanyMemo(e.target.value)}
-                  placeholder="説明会やOB訪問で得た情報を記録しましょう..."
-                  className="mb-4 min-h-[200px]"
-                />
-                <Button
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={handleSaveMemo}
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  保存
-                </Button>
+                <div className="space-y-4">
+                  {company.selections.length > 0 ? (
+                    <div className="space-y-6">
+                      {/* selectionsのループはここだけ */}
+                      {company.selections.map((selection, index) => (
+                        <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
+                          {/* 選考情報 */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-xl text-gray-800">{selection.name}</h4>
+                              <span className="text-lg text-gray-500">({translateSelectionType(selection.type)})</span>
+                            </div>
+                            <Badge className={`text-sm ${getStatusColor(selection.status)}`}>
+                              {translateStatus(selection.status)}
+                            </Badge>
+                          </div>
+
+                          {/* 紐づくスケジュール */}
+                          {selection.schedules.length > 0 ? (
+                            <div className="space-y-1 pl-4">
+                              {selection.schedules.map((schedule, sIndex) => (
+                                <div key={sIndex}>
+                                  <Accordion
+                                    type="single"
+                                    collapsible
+                                    className="w-full"
+                                  >
+                                    <AccordionItem value={schedule.id}>
+                                      <AccordionTrigger>
+                                        <div className="flex items-center gap-2">
+                                          <p className="font-medium text-gray-700 text-lg">{schedule.title}</p>
+                                          <div className="bg-gray-100 rounded-md p-1">
+                                            {schedule.isConfirmed ? (
+                                              <p className="text-sm text-green-400">(予定確定)</p>
+                                            ) : (
+                                              <p className="text-sm text-red-400">(予定未確定)</p>
+                                            )}
+                                          </div>
+
+                                        </div>
+
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <div className="flex items-center gap-2 mt-1 text-base text-gray-600">
+                                          <Calendar className="h-4 w-4" />
+                                          <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
+                                        </div>
+                                        {schedule.location && (
+                                          <div className="flex items-center gap-2 mt-1 text-base text-gray-600">
+                                            <MapPin className="h-4 w-4" />
+                                            <span>{schedule.location}</span>
+                                          </div>
+                                        )}
+                                        {schedule.url && (
+                                          <div className="flex items-center gap-2 mt-1 text-base text-gray-600">
+                                            <Link className="h-4 w-4" />
+                                            <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                          </div>
+                                        )}
+                                        {schedule.note && (
+                                          <div className="flex items-center gap-2 mt-1 text-base text-gray-600">
+                                            <NotepadText className="h-4 w-4" />
+                                            <span>{schedule.note}</span>
+                                          </div>
+                                        )}
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  </Accordion>
+
+
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-base text-gray-500 pl-4">この選考のスケジュールはありません。</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-lg">選考情報はありません。</p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
             {/* ESストックルーム */}
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+                <CardTitle className="flex items-center gap-2 text-xl">
                   <FileText className="h-5 w-5 text-blue-600" />
                   ESストックルーム
                 </CardTitle>
@@ -263,7 +353,7 @@ export default function CompanyDetail() {
                         onClick={() => toggleAccordion(item.id)}
                         className="flex w-full items-center justify-between rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                       >
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-lg text-gray-900">
                           {item.title}
                         </span>
                         <ChevronDown
@@ -275,7 +365,7 @@ export default function CompanyDetail() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="mt-2">
                         <div className="rounded-lg border border-gray-200 bg-white p-4">
-                          <p className="mb-3 text-sm leading-relaxed text-gray-700">
+                          <p className="mb-3 text-base leading-relaxed text-gray-700">
                             {item.content}
                           </p>
                           <div className="flex gap-2">
@@ -305,91 +395,26 @@ export default function CompanyDetail() {
           <div className="space-y-6">
             <Card className="shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <div className="flex items-center gap-2">
-                    <Flag className="h-5 w-5 text-blue-600" />
-                    選考一覧
-                  </div>
-                  <div className="flex gap-2">
-                    <AddSelection
-                      selectionFormData={selectionFormData}
-                      setSelectionFormData={setSelectionFormData}
-                      statusOpen={statusOpen}
-                      setStatusOpen={setStatusOpen}
-                      handleAddSelection={handleAddSelection}
-                    />
-                    <AddSchedule selections={company.selections} />
-                  </div>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <StickyNote className="h-5 w-5 text-blue-600" />
+                  企業メモ
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {company.selections.length > 0 ? (
-                    <div className="space-y-6">
-                      {/* selectionsのループはここだけ */}
-                      {company.selections.map((selection, index) => (
-                        <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
-                          {/* 選考情報 */}
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-md text-gray-800">{selection.name}</h4>
-                              <span className="text-sm text-gray-500">({translateSelectionType(selection.type)})</span>
-                            </div>
-                            <Badge className={getStatusColor(selection.status)}>
-                              {translateStatus(selection.status)}
-                            </Badge>
-                          </div>
-
-                          {/* 紐づくスケジュール */}
-                          {selection.schedules.length > 0 ? (
-                            <div className="space-y-1 pl-4">
-                              {selection.schedules.map((schedule, sIndex) => (
-                                <div key={sIndex}>
-                                  <Accordion
-                                    type="single"
-                                    collapsible
-                                    className="w-full"
-                                  >
-                                    <AccordionItem value={schedule.id}>
-                                      <AccordionTrigger><p className="font-medium text-gray-700">{schedule.title}</p></AccordionTrigger>
-                                      <AccordionContent>
-                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                          <Calendar className="h-4 w-4" />
-                                          <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                          {/* 場所に応じてアイコンを出し分ける */}
-                                          {schedule.location?.toLowerCase().includes('オンライン') ? (
-                                            <Video className="h-4 w-4" />
-                                          ) : (
-                                            <MapPin className="h-4 w-4" />
-                                          )}
-                                          <span>{schedule.location}</span>
-                                        </div>
-                                        {schedule.url && (
-                                          <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                            <Link className="h-4 w-4" />
-                                            <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
-                                          </div>
-                                        )}
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  </Accordion>
-
-
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 pl-4">この選考のスケジュールはありません。</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>選考情報はありません。</p>
-                  )}
-                </div>
+                <Textarea
+                  value={companyMemo}
+                  onChange={(e) => setCompanyMemo(e.target.value)}
+                  placeholder="説明会やOB訪問で得た情報を記録しましょう..."
+                  className="mb-4 min-h-[200px]"
+                />
+                <Button
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSaveMemo}
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  保存
+                </Button>
               </CardContent>
             </Card>
           </div>

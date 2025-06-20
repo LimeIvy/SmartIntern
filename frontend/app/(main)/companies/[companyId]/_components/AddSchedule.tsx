@@ -152,9 +152,9 @@ export default function AddSchedule({ selections }: AddScheduleProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setStep(1); setErrors({}); setApiError(null); } }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="mr-2 h-4 w-4" />
-          予定を追加
+        <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="h-4 w-4" />
+          <span className="text-base">予定を追加</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

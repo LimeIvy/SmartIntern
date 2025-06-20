@@ -30,6 +30,8 @@ model Company {
   id          String    @id @default(cuid())
   name        String    // 企業名
   logoUrl     String?   // 企業ロゴURL
+  hpUrl       String?   // 企業HPURL
+  mypageUrl   String?   // 企業マイページURL
   note        String?   // 企業に関する自由なメモ
   industry    String?   // 企業の業界
   createdAt   DateTime  @default(now())
@@ -41,19 +43,6 @@ model Company {
 
   // リレーション：一つの企業は複数の選考を持つ
   selections  Selection[]
-  urls CompanyUrl[]
-}
-
-// 企業のURL
-model CompanyUrl {
-  id        String   @id @default(cuid())
-  type      String  // URLの名前
-  url       String   // 実際のURL
-  createdAt DateTime @default(now())
-
-  // リレーション：どの企業に紐づくURLか
-  companyId String
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 // 3. 選考カードモデル

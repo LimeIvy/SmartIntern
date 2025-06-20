@@ -19,17 +19,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Building2, Plus, Search, MoreVertical, Trash2, Eye, Calendar, Video, MapPin, Link } from "lucide-react";
+import { Building2, Search, MoreVertical, Trash2, Eye, Calendar, MapPin, Link, NotepadText, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { translateSelectionType, translateStatus } from "@/utils/statusTranslator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formattedDate } from "@/utils/formattedDate";
+import AddCompany from "./_components/add-company";
 
 // APIレスポンスの型を拡張してselectionsをオプショナルで含める
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
 
 const getStatusColor = (status: string) => {
-  // このマッピングは実際のステータス名に合わせて調整が必要です
   if (status.includes("OFFERED")) return "bg-green-100 text-green-800";
   if (status.includes("REJECTED")) return "bg-gray-100 text-gray-800";
   if (status.includes("INTERVIEW")) return "bg-blue-100 text-blue-800";
@@ -58,7 +58,6 @@ const CompanyCardSkeleton = () => (
 );
 
 export default function CompaniesList() {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("すべて");
   const [companies, setCompanies] = useState<CompanyFromApi[]>([]);
@@ -134,6 +133,18 @@ export default function CompaniesList() {
                 <h3 className="mb-1 truncate text-lg font-semibold text-gray-900">
                   {company.name}
                 </h3>
+                {company.hpUrl && (
+                  <a href={company.hpUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800">
+                    {company.hpUrl}
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
+                {company.mypageUrl && (
+                  <a href={company.mypageUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-lg text-blue-600 hover:text-blue-800">
+                    {company.mypageUrl}
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                )}
               </div>
             </div>
 
@@ -214,19 +225,22 @@ export default function CompaniesList() {
                                     <Calendar className="h-4 w-4" />
                                     <span>{formattedDate(schedule.startDate)}～{formattedDate(schedule.endDate)}</span>
                                   </div>
+                                  {schedule.location && (
                                   <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                    {/* 場所に応じてアイコンを出し分ける */}
-                                    {schedule.location?.toLowerCase().includes('オンライン') ? (
-                                      <Video className="h-4 w-4" />
-                                    ) : (
-                                      <MapPin className="h-4 w-4" />
-                                    )}
-                                    <span>{schedule.location}</span>
-                                  </div>
+                                    <MapPin className="h-4 w-4" />
+                                      <span>{schedule.location}</span>
+                                    </div>
+                                  )}
                                   {schedule.url && (
                                     <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                       <Link className="h-4 w-4" />
                                       <a href={schedule.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{schedule.url}</a>
+                                    </div>
+                                  )}
+                                  {schedule.note && (
+                                    <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                      <NotepadText className="h-4 w-4" />
+                                      <span>{schedule.note}</span>
                                     </div>
                                   )}
                                 </AccordionContent>
@@ -261,10 +275,7 @@ export default function CompaniesList() {
               <h2 className="mb-2 text-3xl font-bold text-gray-900">企業一覧</h2>
               <p className="text-gray-600">登録した企業と選考状況を管理できます</p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700" disabled>
-              <Plus className="mr-2 h-4 w-4" />
-              新しい企業を登録
-            </Button>
+            <AddCompany />
           </div>
 
           <div className="mb-6 flex gap-4">
@@ -319,13 +330,7 @@ export default function CompaniesList() {
             <h2 className="mb-2 text-3xl font-bold text-gray-900">企業一覧</h2>
             <p className="text-gray-600">登録した企業と選考状況を管理できます</p>
           </div>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => router.push(`/companies/new`)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            新しい企業を登録
-          </Button>
+          <AddCompany />
         </div>
 
         {/* 検索・フィルターバー */}
@@ -377,13 +382,7 @@ export default function CompaniesList() {
                 : "最初の企業を登録して就活管理を始めましょう"}
             </p>
             {!searchQuery && filterStatus === "すべて" && (
-              <Button
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => router.push(`/companies/new`)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                新しい企業を登録
-              </Button>
+              <AddCompany />
             )}
           </div>
         )}
@@ -392,8 +391,8 @@ export default function CompaniesList() {
         {companies.length > 0 && (
           <div className="mt-8 text-sm text-gray-600">
             {searchQuery || filterStatus !== "すべて"
-              ? `合計 ${filteredCompanies.length}社を登録中`
-              : `合計 ${companies.length}社を登録中`}
+              ? `合計 ${filteredCompanies.length}社`
+              : `合計 ${companies.length}社`}
           </div>
         )}
       </div>
