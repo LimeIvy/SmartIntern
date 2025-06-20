@@ -58,19 +58,19 @@ const CompanyDetailContent = () => {
   const handleDeleteCompany = async () => {
     if (!company) return;
     try {
-        await client.api.company[":id"].$delete({
-            param: { id: company.id },
-        });
-        router.push("/companies");
+      await client.api.company[":id"].$delete({
+        param: { id: company.id },
+      });
+      router.push("/companies");
     } catch (err) {
-        console.error("削除に失敗しました", err);
+      console.error("削除に失敗しました", err);
     }
   };
 
   if (companyData.isPending) {
     return <CompanyDetailSkeleton />;
   }
-  
+
   if (companyData.error) {
     return <div className="text-red-500">エラー: {companyData.error.message}</div>;
   }
@@ -78,7 +78,7 @@ const CompanyDetailContent = () => {
   if (!company) {
     return <div>企業が見つかりません。</div>;
   }
-  
+
   return (
     <div className="mx-auto w-full max-w-7xl p-8">
       {/* Header */}
@@ -110,15 +110,15 @@ const CompanyDetailContent = () => {
           </div>
         </div>
         <div className="flex gap-2">
-            <Button variant="outline" size="lg" onClick={() => router.push(`/companies/${companyId}/edit`)}>
-              <Edit className="h-4 w-4" />
-              <span className="text-lg">編集</span>
-            </Button>
-            <Button variant="outline" size="lg" className="text-red-600 hover:text-red-700" onClick={handleDeleteCompany}>
-              <Trash2 className="h-4 w-4" />
-              <span className="text-lg">削除</span>
-            </Button>
-          </div>
+          <Button variant="outline" size="lg" onClick={() => router.push(`/companies/${companyId}/edit`)}>
+            <Edit className="h-4 w-4" />
+            <span className="text-lg">編集</span>
+          </Button>
+          <Button variant="outline" size="lg" className="text-red-600 hover:text-red-700" onClick={handleDeleteCompany}>
+            <Trash2 className="h-4 w-4" />
+            <span className="text-lg">削除</span>
+          </Button>
+        </div>
       </div>
 
       {/* メインコンテンツ */}
@@ -153,10 +153,7 @@ const CompanyDetailContent = () => {
                         </div>
                       </AccordionTrigger>
                       <AccordionContent className="p-4 pt-0">
-                        <p className="mb-4 text-gray-600">{selection.note || "メモはありません。"}</p>
-                        <div className="mb-4 flex justify-end gap-2">
-                           <AddSchedule selectionId={selection.id} onScheduleAdded={handleRefetch} />
-                        </div>
+                        <p className="mb-4 text-gray-600">{selection.note || ""}</p>
 
                         {/* スケジュール一覧 */}
                         {selection.schedules && selection.schedules.length > 0 ? (
@@ -184,18 +181,21 @@ const CompanyDetailContent = () => {
                                     </div>
                                   )}
                                   {schedule.note && (
-                                      <div className="flex items-center gap-2">
-                                        <NotepadText className="h-4 w-4" />
-                                        <span>{schedule.note}</span>
-                                      </div>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                      <NotepadText className="h-4 w-4" />
+                                      <span>{schedule.note}</span>
+                                    </div>
+                                  )}
                                 </div>
                               </Card>
                             ))}
                           </div>
                         ) : (
-                          <p className="text-center text-gray-500">スケジュールはありません。</p>
+                          <p className="text-center text-gray-500">予定はまだありません。</p>
                         )}
+                        <div className="mt-4 flex justify-end gap-2">
+                          <AddSchedule selectionId={selection.id} onScheduleAdded={handleRefetch} />
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
                   ))}
@@ -240,7 +240,7 @@ const CompanyDetailSkeleton = () => (
         <Skeleton className="h-12 w-24" />
         <Skeleton className="h-12 w-24" />
       </div>
-    </div>    
+    </div>
     <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
       <div className="xl:col-span-2 space-y-6">
         <Skeleton className="h-96 w-full" />

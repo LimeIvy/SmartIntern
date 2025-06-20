@@ -113,7 +113,7 @@ const CompaniesList = () => {
                 <Building2 className="h-8 w-8 text-gray-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="truncate text-2xl font-bold text-gray-900">
+                <h3 className="truncate text-3xl font-bold text-gray-900">
                   {company.name}
                 </h3>
                 <div className="h-10">
@@ -179,8 +179,8 @@ const CompaniesList = () => {
 
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="company-note">
-              <AccordionTrigger>
-                <h4 className="text-md font-semibold text-gray-800">会社概要</h4>
+              <AccordionTrigger className="cursor-pointer">
+                <h4 className="text-xl text-gray-700">会社概要</h4>
               </AccordionTrigger>
               <AccordionContent>
                 {company.note ? (
@@ -196,8 +196,8 @@ const CompaniesList = () => {
             {company.selections.length > 0 ? (
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="selections">
-                  <AccordionTrigger>
-                    <h4 className="text-md font-semibold text-gray-800">選考情報</h4>
+                  <AccordionTrigger className="cursor-pointer">
+                    <h4 className="text-xl text-gray-800">選考情報</h4>
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-6 pt-4">
@@ -205,7 +205,7 @@ const CompaniesList = () => {
                         <div key={index} className="border-t pt-4 first:border-t-0 first:pt-0">
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-md text-gray-800">{selection.name}</h4>
+                              <h4 className="font-semibold text-lg text-gray-800">{selection.name}</h4>
                               <span className="text-sm text-gray-500">({translateSelectionType(selection.type)})</span>
                             </div>
                             <Badge className={getStatusColor(selection.status)}>
@@ -331,7 +331,6 @@ const CompaniesList = () => {
         <div className="mb-8 flex items-start justify-between">
           <div>
             <h2 className="mb-2 text-3xl font-bold text-gray-900">企業一覧</h2>
-            <p className="text-gray-600">登録した企業と選考状況を管理できます</p>
           </div>
           <AddCompany />
         </div>
