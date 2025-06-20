@@ -22,7 +22,7 @@ export const addScheduleSchema = z.object({
   endDate: z.string().min(1, { message: "終了日は必須です。" }),
   startTime: z.string().min(1, { message: "開始時刻は必須です。" }),
   endTime: z.string().min(1, { message: "終了時刻は必須です。" }),
-  isConfirmed: z.boolean().optional(),
+  isConfirmed: z.boolean(),
   location: z.string().optional(),
   url: z.string().optional(),
   note: z.string().optional(),
