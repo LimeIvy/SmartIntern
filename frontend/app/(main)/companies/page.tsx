@@ -108,7 +108,7 @@ const CompaniesList = () => {
       <Card className="transition-shadow hover:shadow-md">
         <CardContent className="p-6">
           <div className="mb-4 flex items-start justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gray-200">
                 <Building2 className="h-8 w-8 text-gray-500" />
               </div>

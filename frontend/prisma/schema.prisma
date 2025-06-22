@@ -21,6 +21,8 @@ model User {
 
   // リレーション：一人のユーザーは複数の企業情報を持つ
   companies Company[]
+  stories Story[]
+  esStocks EsStock[]
 }
 
 
@@ -63,6 +65,7 @@ model Selection {
 
   // リレーション：一つの選考は複数のスケジュールを持つ
   schedules   Schedule[]
+  submittedEs SubmittedEs[]
 }
 
 // 4. スケジュールモデル
@@ -84,6 +87,54 @@ model Schedule {
   // リレーション：どの選考に紐づくスケジュールか
   selectionId String
   selection   Selection     @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+}
+
+model Story {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String   // 経験のタイトル (例:「大学祭実行委員でのリーダー経験」)
+
+  // STARメソッドを意識した構造化データ
+  situation String  // (S) 状況・背景
+  task      String  // (T) 課題・目標
+  action    String  // (A) 具体的にとった行動
+  result    String  // (R) 行動によって得られた結果・学び
+
+  // 自由記述
+  learned   String?  // この経験から得た学びやスキルのメモ
+
+  // リレーション
+  esStocks  EsStock[]
+}
+
+model EsStock {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id]) // Storyとは別にUserにも紐づける
+
+  title     String   // 文章のタイトル (例:「リーダー経験」)
+  content   String   // 文章の本文
+
+  // リレーション
+  baseStoryId String?  // どのStoryを元にしたか (任意)
+  baseStory   Story?   @relation(fields: [baseStoryId], references: [id])
+
+  submittedEs SubmittedEs[] // このストックがどの提出物に使われたか
+}
+
+model SubmittedEs {
+  id            String   @id @default(cuid())
+  selectionId   String
+  selection     Selection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+
+  question      String   // 企業からの設問
+  answer        String   // 実際に提出した回答文
+
+  // リレーション
+  baseStockId   String?  // どのEsStockを元にしたか (任意)
+  baseStock     EsStock? @relation(fields: [baseStockId], references: [id])
 }
 
 // Enum: 選考タイプを定義
