@@ -23,7 +23,7 @@ import type { ProjectDetail } from "@/types/project";
 import { sampleProjectData } from "@/data/sampleProject";
 
 // getData関数
-export function getData(event: { active: Active; over: Over | null }) {
+function getData(event: { active: Active; over: Over | null }) {
   const { active, over } = event;
   // キャンセルされた、もしくはターゲットがない場合はリターン
   if (!active || !over) return;
