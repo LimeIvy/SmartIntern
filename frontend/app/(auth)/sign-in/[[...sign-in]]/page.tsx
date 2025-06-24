@@ -3,7 +3,7 @@ import { SignIn } from "@clerk/nextjs";
 const SignInPage = () => {
   return (
     <div>
-      <SignIn />
+      <SignIn afterSignInUrl="/dashboard" />
     </div>
   );
 };
