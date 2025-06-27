@@ -115,7 +115,7 @@ function Calendar() {
         }
       }}>
         <PopoverTrigger asChild>
-          <div className="w-full h-full cursor-pointer overflow-hidden p-1 text-white">
+          <div className={`w-full h-full cursor-pointer overflow-hidden p-1 ${eventInfo.view.type === 'listWeekFromToday' ? 'text-black' : 'text-white'}`}>
             <div className="font-semibold truncate flex items-center">
               <span className="truncate">{eventInfo.event.title} <span className="text-xs">({extendedProps.companyName} / {extendedProps.selectionName})</span></span>
             </div>
