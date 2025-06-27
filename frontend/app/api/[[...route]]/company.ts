@@ -3,6 +3,8 @@ import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
 import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/add_schema";
+import { z } from "zod";
+import { Status } from "@prisma/client";
 
 const app = new Hono()
   // 企業一覧取得
@@ -178,6 +180,51 @@ const app = new Hono()
       return schedule;
     });
     return c.json(newSchedule);
-  });
+  })
+
+  // 選考ステータス更新
+  .patch(
+    "/selection/:selectionId/status",
+    zValidator(
+      "json",
+      z.object({
+        status: z.nativeEnum(Status),
+      })
+    ),
+    async (c) => {
+      const user = await checkUser();
+      if (!user) {
+        return c.json({ error: "Unauthorized" }, 401);
+      }
+
+      const { selectionId } = c.req.param();
+      const { status } = c.req.valid("json");
+
+      // ユーザーがこの選考を所有しているか確認
+      const selectionToUpdate = await db.selection.findFirst({
+        where: {
+          id: selectionId,
+          company: {
+            userId: user.id,
+          },
+        },
+      });
+
+      if (!selectionToUpdate) {
+        return c.json({ error: "Not Found or Unauthorized" }, 404);
+      }
+
+      const updatedSelection = await db.selection.update({
+        where: {
+          id: selectionId,
+        },
+        data: {
+          status,
+        },
+      });
+
+      return c.json(updatedSelection);
+    }
+  );
 
 export default app;

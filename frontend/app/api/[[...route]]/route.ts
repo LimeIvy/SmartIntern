@@ -11,3 +11,4 @@ export type AppType = typeof route;
 export const GET = handle(route);
 export const POST = handle(route);
 export const DELETE = handle(route);
+export const PATCH = handle(route);
