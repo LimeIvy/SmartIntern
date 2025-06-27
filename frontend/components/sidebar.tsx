@@ -65,11 +65,11 @@ export default function Sidebar() {
                 <li key={item.id}>
                   <button
                     onClick={() => handleClick(item.id)}
-                    className={
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                       isActive
-                        ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors"
-                        : "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors"
-                    }
+                        ? "bg-gray-200 text-gray-900"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
                   >
                     <Icon className="h-5 w-5" />
                     {item.label}
@@ -117,12 +117,12 @@ export default function Sidebar() {
         <div className="fixed inset-0 z-50 flex">
           {/* オーバーレイ */}
           <div
-            className="fixed inset-0"
+            className="fixed inset-0 bg-black/60"
             onClick={() => setOpen(false)}
             aria-label="メニューを閉じる"
           />
           {/* サイドバー本体 */}
-          <div className="relative flex h-full w-64 min-w-64 flex-col">
+          <div className="relative flex h-full w-64 min-w-64 flex-col bg-white">
             <button
               className="absolute top-4 right-4"
               onClick={() => setOpen(false)}
@@ -143,11 +143,11 @@ export default function Sidebar() {
                     <li key={item.id}>
                       <button
                         onClick={() => handleClick(item.id)}
-                        className={
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left font-medium transition-colors ${
                           isActive
-                            ? "flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors"
-                            : "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors"
-                        }
+                            ? "bg-gray-200 text-gray-900"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        }`}
                       >
                         <Icon className="h-5 w-5" />
                         {item.label}
