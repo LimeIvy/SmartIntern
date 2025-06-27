@@ -1,7 +1,6 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { useState } from 'react';
 import { companiesAtom } from "@/store/companies";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,12 +15,13 @@ import {
 import { formattedDate } from "@/utils/formattedDate";
 import { translateStatus } from "@/utils/statusTranslator";
 import Link from "next/link";
-import { Status, SelectionType } from "@prisma/client";
+import { Status } from "@prisma/client";
 import { useRouter } from 'next/navigation';
+import { selectionFilterAtom } from "@/store/filter-atom";
 
 export default function Dashboard() {
   const router = useRouter();
-  const [filter, setFilter] = useState<'ALL' | SelectionType>('ALL');
+  const filter = useAtomValue(selectionFilterAtom);
   const companiesData = useAtomValue(companiesAtom);
   const companies = companiesData.data ?? [];
   const today = new Date();
@@ -66,7 +66,7 @@ export default function Dashboard() {
             companyName: company.name,
             selectionName: selection.name,
             title: schedule.title,
-            time: `${formattedDate(schedule.startDate ?? "", "time")} ～ ${formattedDate(schedule.endDate ?? "", "time")}`,
+            time: `${formattedDate(schedule.startDate, "time")} ～ ${formattedDate(schedule.endDate, "time")}`,
             location: schedule.location ?? undefined,
             url: schedule.url ?? undefined,
             note: schedule.note ?? undefined,
@@ -104,7 +104,7 @@ export default function Dashboard() {
             selectionName: selection.name,
             title: schedule.title,
             daysLeft: diff,
-            deadline: formattedDate(schedule.endDate),
+            deadline: formattedDate(schedule.endDate, 'date'),
             location: schedule.location ?? undefined,
             url: schedule.url ?? undefined,
             note: schedule.note ?? undefined,
@@ -190,29 +190,6 @@ export default function Dashboard() {
       <div className="flex-1 p-8">
         <div className="mb-8 flex items-center justify-between">
           <p className="text-3xl font-bold text-gray-900">{todayString}</p>
-          <div className="flex items-center gap-2 rounded-lg bg-gray-200 p-1">
-            <Button
-              onClick={() => setFilter('ALL')}
-              variant={filter === 'ALL' ? 'default' : 'ghost'}
-              className="transition-all"
-            >
-              すべて
-            </Button>
-            <Button
-              onClick={() => setFilter(SelectionType.INTERNSHIP)}
-              variant={filter === SelectionType.INTERNSHIP ? 'default' : 'ghost'}
-              className="transition-all"
-            >
-              インターン
-            </Button>
-            <Button
-              onClick={() => setFilter(SelectionType.FULLTIME)}
-              variant={filter === SelectionType.FULLTIME ? 'default' : 'ghost'}
-              className="transition-all"
-            >
-              本選考
-            </Button>
-          </div>
         </div>
 
         {/* 上段：今日の予定 & 選考状況サマリ */}
@@ -270,60 +247,60 @@ export default function Dashboard() {
           {upcomingTasks.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {upcomingTasks.map((task, index) => (
-                <div
-                  key={index}
-                  onClick={() => router.push(`/companies/${task.companyId}`)}
-                  className={`h-full w-full rounded-2xl border bg-white p-8 shadow-md transition-shadow hover:shadow-lg flex flex-col gap-4 cursor-pointer ${task.daysLeft === 0 ? 'border-2 border-red-500 bg-red-50' : task.daysLeft <= 2 ? 'border-2 border-orange-400 bg-orange-50' : ''}`}
-                >
-                  {/* 締切バッジ */}
-                  <div className="flex justify-between items-start">
-                    {task.daysLeft === 0 && (
-                      <div className="text-xl font-extrabold text-red-600 drop-shadow">今日締切</div>
-                    )}
-                    {(task.daysLeft > 0 && task.daysLeft <= 2) && (
-                      <div className="text-lg font-extrabold text-orange-500 drop-shadow">あと{task.daysLeft}日</div>
-                    )}
-                    {task.daysLeft > 2 && (
-                      <div className="text-base font-bold text-orange-400">あと{task.daysLeft}日</div>
-                    )}
-                  </div>
+                  <div
+                    key={index}
+                    onClick={() => router.push(`/companies/${task.companyId}`)}
+                    className={`h-full w-full rounded-2xl border bg-white p-8 shadow-md transition-shadow hover:shadow-lg flex flex-col gap-4 cursor-pointer ${task.daysLeft === 0 ? 'border-2 border-red-500 bg-red-50' : task.daysLeft <= 2 ? 'border-2 border-orange-400 bg-orange-50' : ''}`}
+                  >
+                    {/* 締切バッジ */}
+                    <div className="flex justify-between items-start">
+                      {task.daysLeft === 0 && (
+                        <div className="text-xl font-extrabold text-red-600 drop-shadow">今日締切</div>
+                      )}
+                      {(task.daysLeft > 0 && task.daysLeft <= 2) && (
+                        <div className="text-lg font-extrabold text-orange-500 drop-shadow">あと{task.daysLeft}日</div>
+                      )}
+                      {task.daysLeft > 2 && (
+                        <div className="text-base font-bold text-orange-400">あと{task.daysLeft}日</div>
+                      )}
+                    </div>
 
-                  {/* ヘッダー */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <h3 className="truncate text-2xl font-bold text-gray-900">{task.companyName}</h3>
-                      <div className="truncate text-base text-gray-700 font-medium">{task.selectionName}</div>
+                    {/* ヘッダー */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <h3 className="truncate text-2xl font-bold text-gray-900">{task.companyName}</h3>
+                        <div className="truncate text-base text-gray-700 font-medium">{task.selectionName}</div>
+                      </div>
                     </div>
+                    {/* タスク内容 */}
+                    <div className="text-lg font-semibold text-blue-700">{task.title}</div>
+                    {/* 締切 */}
+                    <div className="flex items-center gap-3 text-base text-gray-700 mt-auto">
+                      <span className="font-medium">締切:</span> {task.deadline}
+                    </div>
+                    {/* 場所・リンク・メモ */}
+                    {task.location && (
+                      <div className="flex items-center gap-2 text-base text-gray-700">
+                        <MapPin size={16} /> {task.location}
+                      </div>
+                    )}
+                    {task.url && (
+                      <div className="flex items-center gap-2 text-base">
+                        <a
+                          href={task.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline flex items-center gap-1"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink size={16} /> リンク
+                        </a>
+                      </div>
+                    )}
+                    {task.note && (
+                      <div className="text-sm text-gray-500 mt-1"><FileText size={16} className="inline-block mr-1"/>{task.note}</div>
+                    )}
                   </div>
-                  {/* タスク内容 */}
-                  <div className="text-lg font-semibold text-blue-700">{task.title}</div>
-                  {/* 締切 */}
-                  <div className="flex items-center gap-3 text-base text-gray-700 mt-auto">
-                    <span className="font-medium">締切:</span> {task.deadline}
-                  </div>
-                  {/* 場所・リンク・メモ */}
-                  {task.location && (
-                    <div className="flex items-center gap-2 text-base text-gray-700">
-                      <MapPin size={16} /> {task.location}
-                    </div>
-                  )}
-                  {task.url && (
-                    <div className="flex items-center gap-2 text-base">
-                      <a 
-                        href={task.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-blue-600 hover:underline flex items-center gap-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink size={16} /> リンク
-                      </a>
-                    </div>
-                  )}
-                  {task.note && (
-                    <div className="text-sm text-gray-500 mt-1"><FileText size={16} className="inline-block mr-1"/>{task.note}</div>
-                  )}
-                </div>
               ))}
             </div>
           ) : (

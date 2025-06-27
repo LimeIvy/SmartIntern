@@ -28,6 +28,7 @@ import { formattedDate } from "@/utils/formattedDate";
 import AddCompany from "./_components/add-company";
 import { InferResponseType } from "hono";
 import { client } from "@/lib/hono";
+import { selectionFilterAtom } from "@/store/filter-atom";
 
 type CompanyFromApi = InferResponseType<(typeof client.api.company)["$get"], 200>[number];
 
@@ -65,10 +66,20 @@ const CompaniesList = () => {
   const dispatch = useSetAtom(companiesAtom);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("すべて");
+  const selectionFilter = useAtomValue(selectionFilterAtom);
 
   const filterOptions = ["すべて", "選考中", "内定", "お祈り"];
 
-  const filteredCompanies = companies.filter((company) => {
+  const filteredCompanies = companies.map(company => {
+    if (selectionFilter === 'ALL') {
+      return company;
+    }
+    return {
+      ...company,
+      selections: company.selections.filter(selection => selection.type === selectionFilter),
+    };
+  }).filter(company => company.selections.length > 0)
+  .filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (filterStatus === "すべて") return matchesSearch;
 
@@ -89,6 +100,38 @@ const CompaniesList = () => {
       matchesSearch && (filterStatus === "未応募" ? company.selections.length === 0 : hasStatus)
     );
   });
+
+  const getCompanyCountsByType = () => {
+    const internshipCompanies = new Set<string>();
+    const fulltimeCompanies = new Set<string>();
+
+    companies.forEach(company => {
+      let hasInternship = false;
+      let hasFulltime = false;
+
+      company.selections.forEach(selection => {
+        if (selection.type === 'INTERNSHIP') {
+          hasInternship = true;
+        }
+        if (selection.type === 'FULLTIME') {
+          hasFulltime = true;
+        }
+      });
+
+      if (hasInternship) internshipCompanies.add(company.id);
+      if (hasFulltime) fulltimeCompanies.add(company.id);
+    });
+
+    const totalActiveCompanies = new Set([...internshipCompanies, ...fulltimeCompanies]).size;
+
+    return {
+      internship: internshipCompanies.size,
+      fulltime: fulltimeCompanies.size,
+      total: totalActiveCompanies,
+    };
+  };
+
+  const { internship: internshipCount, fulltime: fulltimeCount } = getCompanyCountsByType();
 
   const handleDelete = async (companyId: string) => {
     try {
@@ -366,8 +409,8 @@ const CompaniesList = () => {
         {!companiesData.isPending && !companiesData.error && companies.length > 0 && (
           <div className="mt-8 text-sm text-gray-600">
             {searchQuery || filterStatus !== "すべて"
-              ? `合計 ${filteredCompanies.length}社`
-              : `合計 ${companies.length}社`}
+              ? `検索結果: ${filteredCompanies.length}社`
+              : `インターン: ${internshipCount}社, 本選考: ${fulltimeCount}社`}
           </div>
         )}
       </div>

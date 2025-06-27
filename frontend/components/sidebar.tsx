@@ -12,6 +12,7 @@ import type { ComponentType } from "react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { SignOutButton, useUser } from "@clerk/nextjs";
+import { SelectionFilter } from "./selection-filter";
 
 export type NavigationItem = {
   id: string;
@@ -77,6 +78,8 @@ export default function Sidebar() {
               );
             })}
           </ul>
+          <div className="my-4 border-t" />
+          <SelectionFilter />
         </nav>
         <div className="border-t p-4">
           <button className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2">
@@ -153,6 +156,8 @@ export default function Sidebar() {
                   );
                 })}
               </ul>
+              <div className="my-4 border-t" />
+              <SelectionFilter />
             </nav>
             <div className="border-t p-4">
               <button className="mb-2 flex w-full items-center gap-3 rounded-lg px-3 py-2">
