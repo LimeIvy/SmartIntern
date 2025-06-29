@@ -1,209 +1,294 @@
 "use client";
 
-import { useState } from "react";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useMemo, useState, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
-  UniqueIdentifier,
-  DragStartEvent,
   DragOverEvent,
-  Active,
-  Over,
-  CollisionDetection,
-  closestCorners,
   DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
+import { useAtom, useAtomValue } from "jotai";
+import { companiesAtom } from "@/store/companies";
+import { selectionFilterAtom } from "@/store/filter-atom";
+import { Status } from "@prisma/client";
+import { client } from "@/lib/hono";
+import { InferResponseType } from "hono";
+import { translateStatus } from "@/utils/statusTranslator";
 
-import { Sortable } from "@/components/dnd-kit/sortable";
-import { SortableItem } from "@/components/dnd-kit/sortableItem";
-import Droppable from "@/components/dnd-kit/droppable";
-import type { ProjectDetail } from "@/types/project";
+import { DroppableContainer } from "@/components/dnd-kit/droppable";
+import { SortableCardItem } from "@/components/dnd-kit/sortableItem";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Building2, Info } from "lucide-react";
 
-import { sampleProjectData } from "@/data/sampleProject";
+type SelectionWithCompany = InferResponseType<
+  typeof client.api.company.$get,
+  200
+>[number]["selections"][number] & {
+  companyName: string;
+  companyId: string;
+};
 
-// getData関数
-function getData(event: { active: Active; over: Over | null }) {
-  const { active, over } = event;
-  // キャンセルされた、もしくはターゲットがない場合はリターン
-  if (!active || !over) return;
-  // ドラッグアイテムとターゲットが同じ場合はリターン
-  if (active.id === over.id) return;
+type Column = {
+  id: Status;
+  title: string;
+  selections: SelectionWithCompany[];
+};
 
-  // activeのデータを取得
-  const fromData = active.data.current?.sortable;
-  if (!fromData) return;
+const KanbanPage = () => {
+  const [companiesData, refetchCompanies] = useAtom(companiesAtom);
+  const selectionFilter = useAtomValue(selectionFilterAtom);
+  const { data: companies, isPending, error } = companiesData;
 
-  // overのデータを取得
-  const toData = over.data.current?.sortable;
-  const toDataNotSortable = {
-    containerId: over.id,
-    index: NaN, // 空のリストへの移動の場合、indexはNaN
-    items: NaN, // 空のリストへの移動の場合、itemsはNaN
-  };
+  const initialColumns = useMemo((): Column[] => {
+    const allSelections: SelectionWithCompany[] =
+      companies?.flatMap((company) =>
+        company.selections.map((selection) => ({
+          ...selection,
+          companyName: company.name,
+          companyId: company.id,
+        }))
+      ) ?? [];
 
-  // データを返す
-  return {
-    from: fromData,
-    to: toData ?? toDataNotSortable,
-  };
-}
+    const filteredSelections =
+      selectionFilter === "ALL"
+        ? allSelections
+        : allSelections.filter(
+            (selection) => selection.type === selectionFilter
+          );
 
-export default function Kanban() {
-  const [projectData, setProjectData] = useState<ProjectDetail>(sampleProjectData); // プロジェクトデータを管理するstate
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null); // ドラッグ中のアイテムIDを管理するstate
+    return Object.values(Status).map((status) => ({
+      id: status,
+      title: translateStatus(status),
+      selections: filteredSelections.filter(
+        (selection) => selection.status === status
+      ),
+    }));
+  }, [companies, selectionFilter]);
+  
+  const [kanbanColumns, setKanbanColumns] = useState<Column[]>(initialColumns);
+  const [activeSelection, setActiveSelection] =
+    useState<SelectionWithCompany | null>(null);
 
-  // 衝突検出アルゴリズム
-  const customClosestCorners: CollisionDetection = (args) => {
-    const cornerCollisions = closestCorners(args);
+  useEffect(() => {
+    setKanbanColumns(initialColumns);
+  }, [initialColumns]);
 
-    // 一番近いリストのコンテナを取得
-    const listIds = new Set(projectData.lists.map((list) => list.id));
-    const closestContainer = cornerCollisions.find((c) => {
-      return listIds.has(c.id.toString());
-    });
-    if (!closestContainer) return cornerCollisions;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  );
 
-    // closestContainerの中のチケットのみを取得
-    const collisions = cornerCollisions.filter(({ data }) => {
-      if (!data) return false;
-      const droppableData = data.droppableContainer?.data?.current;
-      if (!droppableData) return false;
-      const { containerId } = droppableData.sortable;
-      return closestContainer.id === containerId;
-    });
-
-    // 中身のチケットがない場合は、closestContainerを返す
-    if (collisions.length === 0) {
-      return [closestContainer];
+  const findColumn = (id: string | null) => {
+    if (!id) return null;
+    if (kanbanColumns.some((col) => col.id === id)) {
+      return kanbanColumns.find((col) => col.id === id) ?? null;
     }
-    // 中身のチケットがある場合は、collisionsを返す
-    return collisions;
+    return (
+      kanbanColumns.find((col) => col.selections.some((s) => s.id === id)) ??
+      null
+    );
   };
 
-  // ドラッグ開始時の処理 (DragOverlay用)
-  function handleDragStart(event: DragStartEvent) {
+  const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    if (!active) return;
-    setActiveId(active.id); // ドラッグ中のアイテムIDをactiveIdにセット
+    const selection = initialColumns
+      .flatMap((col) => col.selections)
+      .find((s) => s.id === active.id);
+    if (selection) {
+      setActiveSelection(selection);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const isActiveASelection = active.data.current?.type === "Selection";
+    const isOverASelection = over.data.current?.type === "Selection";
+    const isOverAColumn = over.data.current?.type === "Column";
+
+    if (!isActiveASelection) return;
+
+    if (isOverASelection) {
+      // 別のSelectionの上にドラッグした場合
+      const activeColumnId = active.data.current?.selection.status;
+      const overColumnId = over.data.current?.selection.status;
+
+      if (activeColumnId !== overColumnId) {
+        // Not implemented: Move card between columns by hovering over another card
+      }
+    } else if (isOverAColumn) {
+       // カラムの上に直接ドラッグした場合
+       const activeColumnId = active.data.current?.selection.status;
+       const overColumnId = over.id as Status;
+ 
+       if (activeColumnId !== overColumnId) {
+         // Not implemented: This logic is handled in onDragEnd for simplicity
+       }
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveSelection(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    if (activeId === overId) return;
+
+    const activeColumn = findColumn(activeId);
+    const overColumn = findColumn(overId);
+
+    if (!activeColumn || !overColumn || activeColumn.id === overColumn.id) {
+      return;
+    }
+
+    const originalColumns = kanbanColumns;
+    const selectionToMove = activeColumn.selections.find(
+      (s) => s.id === activeId
+    );
+
+    if (!selectionToMove) return;
+
+    // Optimistic Update
+    setKanbanColumns((prev) => {
+      const activeSelections = prev.find(
+        (c) => c.id === activeColumn.id
+      )!.selections;
+      const overSelections = prev.find(
+        (c) => c.id === overColumn.id
+      )!.selections;
+
+      const newActiveSelections = activeSelections.filter(
+        (s) => s.id !== activeId
+      );
+      
+      const overIndex = overSelections.findIndex(s => s.id === overId);
+      const newIndex = overIndex >= 0 ? overIndex : overSelections.length;
+
+      const newOverSelections = [...overSelections];
+      newOverSelections.splice(newIndex, 0, {...selectionToMove, status: overColumn.id});
+
+
+      return prev.map((col) => {
+        if (col.id === activeColumn.id) {
+          return { ...col, selections: newActiveSelections };
+        }
+        if (col.id === overColumn.id) {
+          return { ...col, selections: newOverSelections };
+        }
+        return col;
+      });
+    });
+
+    try {
+      await client.api.company.selection[":selectionId"].status.$patch({
+        param: { selectionId: activeId },
+        json: { status: overColumn.id },
+      });
+      (refetchCompanies as (update: { type: "refetch" }) => void)({
+        type: "refetch",
+      });
+    } catch (err) {
+      console.error("Failed to update selection status:", err);
+      setKanbanColumns(originalColumns); // Revert on error
+      // TODO: Add user-facing error notification
+    }
+  };
+
+  if (isPending) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex w-full overflow-x-auto p-8 gap-6">
+          {Object.values(Status).map((status) => (
+            <div key={status} className="w-80 flex-shrink-0">
+              <Skeleton className="h-8 w-1/2 mb-4" />
+              <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  // ドラッグ中に別のコンテナへ移動する際の処理
-  function handleDragOver(event: DragOverEvent) {
-    const data = getData(event); // イベントデータからfrom, toを取得
-    if (!data) return;
-    const { from, to } = data;
-
-    if (from.containerId === to.containerId) return; // コンテナ内移動の場合はリターン
-
-    const fromList = projectData.lists.find((list) => list.id == from.containerId); // 移動元リストを取得
-    const toList = projectData.lists.find((list) => list.id == to.containerId); // 移動先リストを取得
-    if (!fromList || !toList) return;
-
-    // 移動するチケットを取得
-    const moveTicket = fromList.tickets.find((ticket) => ticket.id === from.items[from.index]);
-    if (!moveTicket) return;
-
-    // 移動元リストからチケットを削除
-    const newFromTickets = fromList.tickets.filter((ticket) => ticket.id !== moveTicket.id);
-    // 移動先リストの適切な位置にチケットを挿入
-    const newToTickets = [
-      ...toList.tickets.slice(0, to.index),
-      moveTicket,
-      ...toList.tickets.slice(to.index),
-    ];
-
-    // 新しいリストデータを作成し、stateを更新
-    const newLists = projectData.lists.map((list) => {
-      if (list.id === from.containerId) return { ...list, tickets: newFromTickets };
-      if (list.id === to.containerId) return { ...list, tickets: newToTickets };
-      return list;
-    });
-    setProjectData({ ...projectData, lists: newLists }); // 全体のデータを更新
-  }
-
-  // ドラッグ終了時の処理（コンテナ内移動）
-  function handleDragEnd(event: DragEndEvent) {
-    setActiveId(null); // DragOverlayを非表示にするためactiveIdを空にする
-
-    const data = getData(event); // イベントデータからfrom, toを取得
-    if (!data) return;
-    const { from, to } = data;
-
-    if (from.containerId !== to.containerId) return; // 別コンテナへの移動の場合はリターン (onDragOverで処理済み)
-
-    const list = projectData.lists.find((list) => list.id == from.containerId); // リストデータを取得
-    if (!list) return;
-
-    // arrayMoveを使って並び替え後のチケット一覧データを取得
-    const newTickets = arrayMove(list.tickets, from.index, to.index);
-
-    // 並べ替え後のリスト一覧データを作成
-    const newLists = projectData.lists.map((list) => {
-      if (list.id === from.containerId) return { ...list, tickets: newTickets };
-      return list;
-    });
-    setProjectData({ ...projectData, lists: newLists }); // 全体のデータを更新
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center text-red-500">
+        エラーが発生しました: {error.message}
+      </div>
+    );
   }
 
   return (
-    // DndContextで全体を囲む
     <DndContext
-      onDragEnd={handleDragEnd} // ドラッグ終了時の処理
-      onDragStart={handleDragStart} // ドラッグ開始時の処理
-      onDragOver={handleDragOver} // ドラッグ中のオーバーラップ処理
-      collisionDetection={customClosestCorners} // 衝突検出アルゴリズムを設定
-      id={projectData.id}
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
     >
-      <div className="h-screen overflow-hidden">
-        <div className="mt-20 flex h-full min-w-fit items-start gap-6 overflow-x-auto overflow-y-auto px-8 py-8">
-          {projectData.lists.map((list) => (
-            <SortableContext
-              items={list.tickets}
-              key={list.id}
-              id={list.id}
-              strategy={verticalListSortingStrategy}
-            >
-              <Droppable key={list.id} id={list.id}>
-                <div className="flex w-72 min-w-72 flex-shrink-0 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                  {/* ヘッダー */}
-                  <div className="mb-4 flex items-center">
-                    <div className="flex w-full items-center justify-between">
-                      <span className="ml-4 py-3 text-xl font-semibold text-gray-700">
-                        {list.title}
-                      </span>
-                      <span className="text-md mr-4 rounded bg-gray-100 px-2 py-0.5 text-gray-600">
-                        {list.tickets.length}
-                      </span>
-                    </div>
-                  </div>
-                  {/* カードリスト */}
-                  <div className="flex max-h-1/2 flex-1 flex-col gap-3 overflow-y-auto">
-                    {list.tickets.map((ticket) => (
-                      <Sortable key={ticket.id} id={ticket.id}>
-                        <div className="flex flex-col gap-2 rounded-md border border-gray-200 bg-white p-3 shadow">
-                          <div className="text-sm font-medium text-gray-800">
-                            {ticket.title ?? `kanban card title - ${ticket.id}`}
-                          </div>
-                        </div>
-                      </Sortable>
+      <div className="h-full bg-gray-50">
+        <div className="p-8 flex flex-col h-full">
+          <Alert className="mb-4 sticky top-16 bg-background/80 backdrop-blur-sm z-10">
+            <Info className="h-4 w-4" />
+            <AlertTitle>使い方</AlertTitle>
+            <AlertDescription>
+              選考カードをドラッグ＆ドロップしてステータスを更新できます。
+            </AlertDescription>
+          </Alert>
+          <div className="flex flex-grow min-w-fit items-start mt-10 gap-6 overflow-x-auto">
+            {kanbanColumns.map((col) => (
+              <DroppableContainer
+                key={col.id}
+                id={col.id}
+                title={col.title}
+                selectionCount={col.selections.length}
+              >
+                <SortableContext items={col.selections.map((s) => s.id)}>
+                  <div className="flex flex-col gap-3">
+                    {col.selections.map((selection) => (
+                      <SortableCardItem
+                        key={selection.id}
+                        selection={selection}
+                      />
                     ))}
+                    {col.selections.length === 0 && (
+                      <div className="flex justify-center items-center h-24 text-sm text-gray-500">
+                        <Building2 className="mr-2 h-4 w-4" />
+                        <span>該当なし</span>
+                      </div>
+                    )}
                   </div>
-                  {/* + Create ボタン */}
-                  <button className="mt-4 flex items-center gap-1 rounded px-2 py-1 text-sm font-medium text-gray-500 transition hover:text-blue-600">
-                    <span className="text-lg">＋</span> Create
-                  </button>
-                </div>
-              </Droppable>
-            </SortableContext>
-          ))}
-          {activeId && (
-            <DragOverlay>
-              <SortableItem itemId={activeId} />
-            </DragOverlay>
-          )}
+                </SortableContext>
+              </DroppableContainer>
+            ))}
+          </div>
         </div>
       </div>
+
+      {typeof document !== "undefined" && createPortal(
+        <DragOverlay>
+          {activeSelection && (
+            <SortableCardItem selection={activeSelection} isOverlay />
+          )}
+        </DragOverlay>,
+        document.body
+      )}
     </DndContext>
   );
-}
+};
+
+export default KanbanPage; 
