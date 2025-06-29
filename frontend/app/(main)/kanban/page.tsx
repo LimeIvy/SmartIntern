@@ -24,7 +24,8 @@ import { translateStatus } from "@/utils/statusTranslator";
 import { DroppableContainer } from "@/components/dnd-kit/droppable";
 import { SortableCardItem } from "@/components/dnd-kit/sortableItem";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Building2, Info } from "lucide-react";
 
 type SelectionWithCompany = InferResponseType<
   typeof client.api.company.$get,
@@ -239,30 +240,42 @@ const KanbanPage = () => {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="h-[calc(100vh-4rem)] bg-gray-50">
-        <div className="mt-16 flex h-full min-w-fit items-start gap-6 overflow-x-auto p-8">
-          {kanbanColumns.map((col) => (
-            <DroppableContainer
-              key={col.id}
-              id={col.id}
-              title={col.title}
-              selectionCount={col.selections.length}
-            >
-              <SortableContext items={col.selections.map((s) => s.id)}>
-                <div className="flex flex-col gap-3">
-                  {col.selections.map((selection) => (
-                    <SortableCardItem key={selection.id} selection={selection} />
-                  ))}
-                  {col.selections.length === 0 && (
-                     <div className="flex justify-center items-center h-24 text-sm text-gray-500">
-                        <Building2 className="mr-2 h-4 w-4"/>
+      <div className="h-full bg-gray-50">
+        <div className="p-8 flex flex-col h-full">
+          <Alert className="mb-4 sticky top-16 bg-background/80 backdrop-blur-sm z-10">
+            <Info className="h-4 w-4" />
+            <AlertTitle>使い方</AlertTitle>
+            <AlertDescription>
+              選考カードをドラッグ＆ドロップしてステータスを更新できます。
+            </AlertDescription>
+          </Alert>
+          <div className="flex flex-grow min-w-fit items-start mt-10 gap-6 overflow-x-auto">
+            {kanbanColumns.map((col) => (
+              <DroppableContainer
+                key={col.id}
+                id={col.id}
+                title={col.title}
+                selectionCount={col.selections.length}
+              >
+                <SortableContext items={col.selections.map((s) => s.id)}>
+                  <div className="flex flex-col gap-3">
+                    {col.selections.map((selection) => (
+                      <SortableCardItem
+                        key={selection.id}
+                        selection={selection}
+                      />
+                    ))}
+                    {col.selections.length === 0 && (
+                      <div className="flex justify-center items-center h-24 text-sm text-gray-500">
+                        <Building2 className="mr-2 h-4 w-4" />
                         <span>該当なし</span>
-                     </div>
-                  )}
-                </div>
-              </SortableContext>
-            </DroppableContainer>
-          ))}
+                      </div>
+                    )}
+                  </div>
+                </SortableContext>
+              </DroppableContainer>
+            ))}
+          </div>
         </div>
       </div>
 
