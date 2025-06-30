@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, User, LogOut, Home, Kanban, Calendar, Building2, Menu, X } from "lucide-react";
+import { Settings, User, LogOut, Home, Kanban, Calendar, Building2, Menu, X, FileText, Mic } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -31,6 +31,8 @@ export default function Sidebar() {
     { id: "kanban", label: "カンバン", icon: Kanban },
     { id: "calendar", label: "カレンダー", icon: Calendar },
     { id: "companies", label: "企業一覧", icon: Building2 },
+    { id: "ES", label: "ES置き場", icon: FileText },
+    { id: "interview", label: "AI面接練習", icon: Mic },
   ];
 
   const handleClick = (id: string) => {
