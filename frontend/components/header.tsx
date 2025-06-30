@@ -15,13 +15,13 @@ const header = async () => {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <Kanban className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">就活管理</span>
+              <span className="text-xl font-bold text-gray-900">Smart Intern</span>
             </div>
 
             <div className="flex items-center gap-4">
               <SignedOut>
                 <SignInButton>
-                  <Button className="bg-blue-600 hover:bg-blue-700">無料で始める</Button>
+                  <Button className="bg-blue-600 hover:bg-blue-700">登録する</Button>
                 </SignInButton>
               </SignedOut>
               <SignedIn>
