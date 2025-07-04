@@ -9,8 +9,10 @@ import { Status } from "@prisma/client";
 const app = new Hono()
   // 企業一覧取得
   .get("/", async (c) => {
+    console.log("[API] GET /company - 開始");
     const user = await checkUser();
     if (!user) {
+      console.log("[API] GET /company - 未認証");
       return c.json({ error: "Unauthorized" }, 401);
     }
 
@@ -30,6 +32,8 @@ const app = new Hono()
       },
     });
 
+    console.log("[API] GET /company - 取得した企業数:", companies.length);
+    console.log("[API] GET /company - ユーザーID:", user.id);
     return c.json(companies);
   })
 
