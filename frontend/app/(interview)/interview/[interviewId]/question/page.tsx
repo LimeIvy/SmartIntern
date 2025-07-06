@@ -6,7 +6,7 @@ import { InferResponseType } from "hono";
 import { client } from "@/lib/hono";
 import Webcam from 'react-webcam'
 import Image from 'next/image'
-import { Video } from 'lucide-react'
+import { ArrowRight, Video } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const QuestionsSelection = dynamic(() => import('./_components/QuestionsSelection'))
@@ -15,6 +15,7 @@ const RecordAnswerSection = dynamic(() => import('./_components/RecordAnswerSect
 type InterviewFromApi = InferResponseType<(typeof client.api.interview)["$get"], 200>[number];
 
 type Question = { question: string; answer: string }
+
 type Interview = {
   interviewId: string
   UserES: string
@@ -52,8 +53,11 @@ const StartInterview = ({ params }: { params: Promise<{ interviewId: string }> }
   }, [interviewId])
 
   return (
-    <div>
-      <div className="flex items-start justify-center gap-10 p-10">
+    <div className="p-10">
+      <div className=" flex justify-end gap-2 mr-5">
+        <h1 className="text-2xl">質問数 {activeQuestionIndex + 1} / 10 問</h1>
+      </div>
+      <div className="flex items-start justify-center gap-10 mt-5">
         {/* 左側：自分のカメラ */}
         <div className="flex flex-col items-center w-1/2">
           <div className="w-full aspect-[4/3] bg-secondary border flex items-center justify-center">
@@ -96,14 +100,17 @@ const StartInterview = ({ params }: { params: Promise<{ interviewId: string }> }
               className="w-full h-full object-cover"
             />
             <div className="absolute left-0 bottom-0 text-white text-sm bg-black/60 px-3 py-1">
-              AI面接官
+              面接官
             </div>
           </div>
           <div className="mt-5 text-center">
             <QuestionsSelection interviewQuestion={interviewQuestion} activeQuestionIndex={activeQuestionIndex} />
           </div>
           <div className="mt-5 flex justify-center">
-            {activeQuestionIndex < interviewQuestion.length - 1 && <Button className="w-full md:w-1/2 bg-green-400 hover:bg-green-500 hover:scale-105 transition-all duration-300" onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}>回答を送信する</Button>}
+            {activeQuestionIndex < interviewQuestion.length - 1 && <Button className="w-full md:w-1/2 bg-green-400 hover:bg-green-500 hover:scale-105 transition-all duration-300" onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}>
+              <ArrowRight className="w-4 h-4" />
+            次の質問へ進む
+            </Button>}
             {activeQuestionIndex === interviewQuestion.length - 1 &&
               <Link href={`/interview/${interviewId}/feedback`}>
                 <Button className="w-full md:w-1/2 bg-red-400 hover:bg-red-500 hover:scale-105 transition-all duration-300" >面接を終了する</Button>

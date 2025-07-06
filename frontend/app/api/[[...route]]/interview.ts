@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addInterviewSchema } from "@/schemas/form_schema";
+import { addInterviewAnswerSchema, addInterviewSchema } from "@/schemas/form_schema";
 import { v4 as uuidv4 } from 'uuid';
 
 const app = new Hono()
@@ -66,6 +66,29 @@ const app = new Hono()
       return c.json({ error: "Not Found" }, 404);
     }
     return c.json(interview);
+  })
+
+  .post("/answer", zValidator("json", addInterviewAnswerSchema), async (c) => {
+    const data = c.req.valid("json");
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    try {
+    const interviewAnswer = await db.interviewAnswer.create({
+      data: {
+        interviewId: data.interviewId,
+        question: data.question,
+        answer: data.answer,
+        feedback: data.feedback,
+        createdAt: new Date(),
+        },
+      });
+      return c.json(interviewAnswer);
+    } catch (error) {
+      console.error("Error in POST /interview/answer", error);
+      return c.json({ error: "Internal Server Error" }, 500);
+    }
   })
 
 export default app;

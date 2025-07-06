@@ -35,3 +35,10 @@ export const addInterviewSchema = z.object({
   companyResearch: z.string(),
   Question: z.string(),
 });
+
+export const addInterviewAnswerSchema = z.object({
+  interviewId: z.string().min(1, { message: "面接IDは必須です。" }),
+  question: z.string().min(1, { message: "質問は必須です。" }),
+  answer: z.string().min(1, { message: "回答は必須です。" }),
+  feedback: z.string().min(1, { message: "フィードバックは必須です。" }),
+});

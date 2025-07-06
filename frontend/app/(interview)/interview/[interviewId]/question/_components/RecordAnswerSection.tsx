@@ -5,8 +5,18 @@ import useSpeechToText from 'react-hook-speech-to-text';
 import { Mic } from 'lucide-react';
 import { toast } from 'sonner';
 import { GeminiAIModel } from '@/utils/GeminiAIModel';
-import db from '@/lib/prisma';
-import { Interview } from '@prisma/client';
+
+type Interview = {
+  interviewId: string
+  UserES: string
+  createdAt: Date
+  companyName: string
+  companyURL: string
+  companyResearch: string
+  userId: string
+  id: string
+  Question: string
+}
 
 type Question = {
   question: string;
@@ -41,7 +51,7 @@ const RecordAnswerSection = ({ interviewQuestion, activeQuestionIndex, interview
     if (!isRecording && userAnswer?.length > 10) {
       UpdateUserAnswer();
     }
-    if (userAnswer?.length < 10) {
+    if (userAnswer?.length > 0 && userAnswer?.length < 10) {
       setIsLoading(false);
       toast.error('10文字以上話してください');
       return;
@@ -77,17 +87,18 @@ const RecordAnswerSection = ({ interviewQuestion, activeQuestionIndex, interview
     console.log(mockJsonResp);
     const JsonFeedbackResp = JSON.parse(mockJsonResp);
 
-    const resp = await db.interviewAnswer.create({
-      data: {
-        interviewId: interviewData.id.toString(),
+    const resp = await fetch(`/api/interview/answer`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        interviewId: interviewData.id,
         question: interviewQuestion[activeQuestionIndex]?.question ?? "",
         answer: userAnswer,
         feedback: JsonFeedbackResp.feedback,
-        createdAt: new Date(),
-      }
-    })
+      }),
+    });
 
-    if (resp) {
+    if (resp.ok) {
       toast.success('回答を更新しました');
       setUserAnswer('');
       setResults([]);
