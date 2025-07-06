@@ -8,7 +8,7 @@ const InterviewItemCard = ({ interview }: { interview: Interview }) => {
   const router = useRouter();
 
   const onFeedBack = () => {
-    router.push(`/interview/${interview.interviewId}/feedback`);
+    router.push(`/interview/${interview.id}/feedback`);
   }
 
   return (

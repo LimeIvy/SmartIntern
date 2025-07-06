@@ -162,9 +162,9 @@ const AddNewInterview = () => {
       });
 
       const data = await response.json();
-      if (data && 'interviewId' in data) {
+      if (data && 'id' in data) {
         setOpenDialog(false);
-        router.push(`/interview/${data.interviewId}`);
+        router.push(`/interview/${data.id}`);
       } else if (data && 'error' in data) {
         alert('面接登録に失敗しました: ' + data.error);
       }

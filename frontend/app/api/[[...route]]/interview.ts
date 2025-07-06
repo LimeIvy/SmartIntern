@@ -39,7 +39,7 @@ const app = new Hono()
 
     const newInterview = await db.interview.create({
       data: {
-        interviewId: uuidv4(),
+        id: uuidv4(),
         companyName: data.companyName,
         companyURL: data.companyURL,
         companyResearch: data.companyResearch,
@@ -49,7 +49,7 @@ const app = new Hono()
         createdAt: new Date(),
       },
     });
-    return c.json({ interviewId: newInterview.interviewId });
+    return c.json({ id: newInterview.id });
   })
 
   .get("/:interviewId", async (c) => {
@@ -59,9 +59,9 @@ const app = new Hono()
     }
     const { interviewId } = c.req.param();
     const interview = await db.interview.findFirst({
-      where: { interviewId: interviewId },
+      where: { id: interviewId },
     });
-    console.log(interview);
+    console.log("ああああああああああああああああ", interview);
     if (!interview) {
       return c.json({ error: "Not Found" }, 404);
     }
@@ -105,11 +105,10 @@ const app = new Hono()
     const { interviewId } = c.req.param();
     // すべての回答を取得
     const allAnswers = await db.interviewAnswer.findMany({
-      where: { id: interviewId },
+      where: { interviewId: interviewId },
       orderBy: { createdAt: 'desc' },
     });
     console.log("allAnswers", allAnswers);
-    // questionごとに最新のものだけを抽出
     type InterviewAnswer = typeof allAnswers[number];
     const latestByQuestion: Record<string, InterviewAnswer> = {};
     for (const ans of allAnswers) {
@@ -118,7 +117,6 @@ const app = new Hono()
       }
     }
     const latestAnswers = Object.values(latestByQuestion);
-    console.log("latestAnswers", latestAnswers);
     return c.json(latestAnswers);
   })
 

@@ -45,7 +45,7 @@ const FeedBack = () => {
 
     if (latestIds) {
       setFeedbackList(latestIds as UserAnswer[]);
-      console.log(feedbackList);
+      console.log(latestIds);
     }
   }
   return (

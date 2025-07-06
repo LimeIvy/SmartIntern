@@ -159,10 +159,9 @@ enum Status {
 }
 
 model Interview {
-  id        String   @id @default(cuid())
-  interviewId String
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   companyName String
   companyURL String
   companyResearch String

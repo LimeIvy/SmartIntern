@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { Volume2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 type Question = {
   question: string;
@@ -28,11 +29,18 @@ const QuestionsSelection = ({ interviewQuestion, activeQuestionIndex }: { interv
     setIsLoading(true);
 
     try {
+      console.log('text', text);
       const response = await fetch('/api/gemini-tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text }),
       });
+
+      if (response.status === 429) {
+        toast.error("TTS APIの上限に達しました。代替音声を再生します。");
+        setIsLoading(false);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -58,6 +66,9 @@ const QuestionsSelection = ({ interviewQuestion, activeQuestionIndex }: { interv
       audio.load();
 
     } catch (error) {
+      if (error instanceof Error && error.message?.includes("429")) {
+        toast.error("TTS APIの上限に達しました。代替音声を再生します。");
+      }
       console.error('Gemini TTS Error:', error);
       // エラー時は標準TTSを使用
       const speech = new SpeechSynthesisUtterance(text);
