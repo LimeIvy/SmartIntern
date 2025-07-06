@@ -27,3 +27,11 @@ export const addScheduleSchema = z.object({
   url: z.string().optional(),
   note: z.string().optional(),
 });
+
+export const addInterviewSchema = z.object({
+  companyName: z.string().min(1, { message: "企業名は必須です。" }),
+  companyURL: z.string().url({ message: "無効なURLです" }),
+  UserES: z.string().min(1).max(500, { message: "ESは500文字以内で入力してください。" }),
+  companyResearch: z.string(),
+  Question: z.string(),
+});

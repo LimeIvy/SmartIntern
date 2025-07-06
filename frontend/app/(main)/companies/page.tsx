@@ -82,28 +82,27 @@ const CompaniesList = () => {
       ...company,
       selections: company.selections.filter(selection => selection.type === selectionFilter),
     };
-  }).filter(company => company.selections.length > 0)
-    .filter((company) => {
-      const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
-      if (filterStatus === "すべて") return matchesSearch;
+  }).filter((company) => {
+    const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (filterStatus === "すべて") return matchesSearch;
 
-      const hasStatus = company.selections.some((selection) => {
-        switch (filterStatus) {
-          case "選考中":
-            return !["OFFERED", "REJECTED"].some((s) => selection.status.includes(s));
-          case "内定":
-            return selection.status.includes("OFFERED");
-          case "お祈り":
-            return selection.status.includes("REJECTED");
-          default:
-            return true;
-        }
-      });
-
-      return (
-        matchesSearch && (filterStatus === "未応募" ? company.selections.length === 0 : hasStatus)
-      );
+    const hasStatus = company.selections.some((selection) => {
+      switch (filterStatus) {
+        case "選考中":
+          return !["OFFERED", "REJECTED"].some((s) => selection.status.includes(s));
+        case "内定":
+          return selection.status.includes("OFFERED");
+        case "お祈り":
+          return selection.status.includes("REJECTED");
+        default:
+          return true;
+      }
     });
+
+    return (
+      matchesSearch && (filterStatus === "未応募" ? company.selections.length === 0 : hasStatus)
+    );
+  });
 
   const getCompanyCountsByType = () => {
     const internshipCompanies = new Set<string>();

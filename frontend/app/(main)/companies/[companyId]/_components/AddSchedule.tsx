@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
-import { addScheduleSchema } from "@/schemas/add_schema";
+import { addScheduleSchema } from "@/schemas/form_schema";
 import { CheckCircle2, X } from "lucide-react";
 import { client } from "@/lib/hono";
 import { z } from "zod";

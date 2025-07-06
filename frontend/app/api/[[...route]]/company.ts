@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/add_schema";
+import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/form_schema";
 import { z } from "zod";
 import { Status } from "@prisma/client";
 

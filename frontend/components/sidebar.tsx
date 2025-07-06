@@ -25,14 +25,15 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
-
+  const isInterviewPage = pathname.startsWith("/interview");
+  
   const navigationItems: NavigationItem[] = [
     { id: "dashboard", label: "ダッシュボード", icon: Home },
     { id: "kanban", label: "カンバン", icon: Kanban },
     { id: "calendar", label: "カレンダー", icon: Calendar },
     { id: "companies", label: "企業一覧", icon: Building2 },
     { id: "ES", label: "ES置き場", icon: FileText },
-    { id: "interview", label: "AI面接練習", icon: Mic },
+    { id: "interview", label: "AI面接", icon: Mic },
   ];
 
   const handleClick = (id: string) => {
@@ -41,10 +42,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ハンバーガーメニュー（sm未満のみ表示） */}
-      <div className="absolute top-4 left-4 z-50 sm:hidden">
+      {/* ハンバーガーメニュー（sm未満のみ表示、interviewページは常に表示） */}
+      <div className={`absolute top-4 left-4 z-50 ${isInterviewPage ? "" : "sm:hidden"}`}>
         <button
-          className="rounded border p-2"
+          className="rounded border p-2 bg-white"
           onClick={() => setOpen(true)}
           aria-label="メニューを開く"
         >
@@ -53,7 +54,8 @@ export default function Sidebar() {
       </div>
 
       {/* サイドバー本体（sm以上で表示） */}
-      <div className="sticky top-0 hidden h-screen w-64 min-w-64 flex-shrink-0 flex-col border-r sm:flex">
+      <div className={`sticky top-0 h-screen w-64 min-w-64 flex-shrink-0 flex-col border-r ${isInterviewPage ? "!hidden" : "hidden sm:flex"
+        }`}>
         <div className="p-6">
           <h1 className="text-xl font-bold">就活管理</h1>
         </div>
