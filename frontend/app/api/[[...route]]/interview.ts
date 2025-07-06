@@ -97,4 +97,29 @@ const app = new Hono()
     }
   })
 
+  .get("/:interviewId/feedback", async (c) => {
+    const user = await checkUser();
+    if (!user) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const { interviewId } = c.req.param();
+    // すべての回答を取得
+    const allAnswers = await db.interviewAnswer.findMany({
+      where: { id: interviewId },
+      orderBy: { createdAt: 'desc' },
+    });
+    console.log("allAnswers", allAnswers);
+    // questionごとに最新のものだけを抽出
+    type InterviewAnswer = typeof allAnswers[number];
+    const latestByQuestion: Record<string, InterviewAnswer> = {};
+    for (const ans of allAnswers) {
+      if (!latestByQuestion[ans.question]) {
+        latestByQuestion[ans.question] = ans;
+      }
+    }
+    const latestAnswers = Object.values(latestByQuestion);
+    console.log("latestAnswers", latestAnswers);
+    return c.json(latestAnswers);
+  })
+
 export default app;

@@ -74,7 +74,13 @@ const StartInterview = ({ params }: { params: Promise<{ interviewId: string }> }
             )}
           </div>
           <div className="mt-5 w-full">
-            <RecordAnswerSection interviewQuestion={interviewQuestion} activeQuestionIndex={activeQuestionIndex} interviewData={interviewData as Interview} />
+            <RecordAnswerSection
+              interviewQuestion={interviewQuestion}
+              setInterviewQuestion={setInterviewQuestion}
+              activeQuestionIndex={activeQuestionIndex}
+              setActiveQuestionIndex={setActiveQuestionIndex}
+              interviewData={interviewData as Interview}
+            />
           </div>
 
           <div className="mt-5 w-full flex justify-center">
@@ -107,15 +113,17 @@ const StartInterview = ({ params }: { params: Promise<{ interviewId: string }> }
             <QuestionsSelection interviewQuestion={interviewQuestion} activeQuestionIndex={activeQuestionIndex} />
           </div>
           <div className="mt-5 flex justify-center">
-            {activeQuestionIndex < interviewQuestion.length - 1 && <Button className="w-full md:w-1/2 bg-green-400 hover:bg-green-500 hover:scale-105 transition-all duration-300" onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}>
-              <ArrowRight className="w-4 h-4" />
-            次の質問へ進む
-            </Button>}
-            {activeQuestionIndex === interviewQuestion.length - 1 &&
+            {activeQuestionIndex < 9 && (
+              <Button className="w-full md:w-1/2 bg-green-400 hover:bg-green-500 hover:scale-105 transition-all duration-300" onClick={() => setActiveQuestionIndex(activeQuestionIndex + 1)}>
+                <ArrowRight className="w-4 h-4" />
+                次の質問へ進む
+              </Button>
+            )}
+            {activeQuestionIndex === 9 && (
               <Link href={`/interview/${interviewId}/feedback`}>
                 <Button className="w-full md:w-1/2 bg-red-400 hover:bg-red-500 hover:scale-105 transition-all duration-300" >面接を終了する</Button>
               </Link>
-            }
+            )}
           </div>
         </div>
       </div>

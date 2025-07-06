@@ -185,5 +185,6 @@ model InterviewAnswer {
   companyFitScore Int
   growthScore Int
   feedback String
+  followUpQuestion String?
   createdAt DateTime @default(now())
 }

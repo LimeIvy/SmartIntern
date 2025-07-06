@@ -22,6 +22,7 @@ type Question = {
   category: string;
   question: string;
   answer: string;
+  followUpCount?: number;
 };
 
 // カテゴリ別評価基準とプロンプト
@@ -48,7 +49,13 @@ const CATEGORY_CONFIGS = {
   }
 };
 
-const RecordAnswerSection = ({ interviewQuestion, activeQuestionIndex, interviewData }: { interviewQuestion: Question[], activeQuestionIndex: number, interviewData: Interview }) => {
+const RecordAnswerSection = ({ interviewQuestion, setInterviewQuestion, activeQuestionIndex, setActiveQuestionIndex, interviewData }: {
+  interviewQuestion: Question[],
+  setInterviewQuestion: React.Dispatch<React.SetStateAction<Question[]>>,
+  activeQuestionIndex: number,
+  setActiveQuestionIndex: React.Dispatch<React.SetStateAction<number>>,
+  interviewData: Interview
+}) => {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -109,7 +116,7 @@ ${interviewQuestion[activeQuestionIndex]?.category}回答評価
 回答: ${userAnswer}
 
 評価基準
-合計点が60点未満の場合は評価を「INSUFFICIENT」とする。
+合計点が70点未満の場合は評価を「INSUFFICIENT」とする。
 
 具体性 (${config.weightings.specificity}点): 具体的なエピソード、数値、詳細。曖昧表現の少なさ。
 
@@ -124,7 +131,7 @@ STAR形式構造 (${config.weightings.starStructure}点): Situation, Task, Actio
 出力フォーマット
 必ず以下のJSON形式で回答すること。
 
-評価が「INSUFFICIENT」の場合のみ、回答の弱点を補い改善を促すための具体的な深掘り質問を1つ、followUpQuestionsキーに追加すること。
+回答を深掘る具体的な質問を1つ、followUpQuestionsキーに追加すること。
 
 {
   "evaluation": "SUFFICIENT" | "INSUFFICIENT",
@@ -142,9 +149,9 @@ STAR形式構造 (${config.weightings.starStructure}点): Situation, Task, Actio
 
     const result = await GeminiAIModel(feedbackPrompt, 0.1);
 
-    const mockJsonResp = (result.replace('```json', '').replace('```', ''))
-    console.log(mockJsonResp);
-    const JsonFeedbackResp = JSON.parse(mockJsonResp);
+    const resultJsonResp = (result.replace('```json', '').replace('```', ''))
+    console.log(resultJsonResp);
+    const JsonFeedbackResp = JSON.parse(resultJsonResp);
 
     const resp = await fetch(`/api/interview/answer`, {
       method: 'POST',
@@ -160,6 +167,7 @@ STAR形式構造 (${config.weightings.starStructure}点): Situation, Task, Actio
         companyFitScore: JsonFeedbackResp.companyFitScore,
         growthScore: JsonFeedbackResp.growthScore,
         feedback: JsonFeedbackResp.feedback,
+        followUpQuestion: JsonFeedbackResp.followUpQuestions,
       }),
     });
 
@@ -171,6 +179,36 @@ STAR形式構造 (${config.weightings.starStructure}点): Situation, Task, Actio
       toast.error('回答を更新できませんでした');
     }
     setResults([]);
+    // followUpロジック
+    const current = interviewQuestion[activeQuestionIndex];
+    if (!current) {
+      setActiveQuestionIndex(activeQuestionIndex + 1);
+      setIsLoading(false);
+      return;
+    }
+    const currentFollowUpCount = current.followUpCount ?? 0;
+    if (
+      JsonFeedbackResp.evaluation === "INSUFFICIENT" &&
+      JsonFeedbackResp.followUpQuestions &&
+      currentFollowUpCount < 2
+    ) {
+      const followUpText = JsonFeedbackResp.followUpQuestions;
+      const followUp: Question = {
+        category: current.category,
+        question: followUpText,
+        answer: "",
+        followUpCount: currentFollowUpCount + 1,
+      };
+      const newQuestions = [
+        ...interviewQuestion.slice(0, activeQuestionIndex + 1),
+        followUp,
+        ...interviewQuestion.slice(activeQuestionIndex + 1),
+      ];
+      setInterviewQuestion(newQuestions);
+      setActiveQuestionIndex(activeQuestionIndex + 1);
+    } else {
+      setActiveQuestionIndex(activeQuestionIndex + 1);
+    }
     setIsLoading(false);
   }
 

@@ -47,4 +47,5 @@ export const addInterviewAnswerSchema = z.object({
   companyFitScore: z.number().min(0, { message: "企業適合性は0以上です。" }),
   growthScore: z.number().min(0, { message: "成長性は0以上です。" }),
   feedback: z.string().min(1, { message: "フィードバックは必須です。" }),
+  followUpQuestion: z.string().optional(),
 });
