@@ -133,7 +133,7 @@ const AddNewInterview = () => {
   ]
 }`;
 
-    const result = await GeminiAIModel(CreateQuestionsPrompt);
+    const result = await GeminiAIModel(CreateQuestionsPrompt, 1);
     if (typeof result !== 'string') {
       console.error('AIモデルの返却値がstring型ではありません:', result);
       setLoading(false);

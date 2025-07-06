@@ -178,6 +178,12 @@ model InterviewAnswer {
   interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
   question String
   answer String
+  totalScore Int
+  specificityScore Int
+  logicScore Int
+  starStructureScore Int
+  companyFitScore Int
+  growthScore Int
   feedback String
   createdAt DateTime @default(now())
 }

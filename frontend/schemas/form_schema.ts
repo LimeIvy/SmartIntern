@@ -40,5 +40,11 @@ export const addInterviewAnswerSchema = z.object({
   interviewId: z.string().min(1, { message: "面接IDは必須です。" }),
   question: z.string().min(1, { message: "質問は必須です。" }),
   answer: z.string().min(1, { message: "回答は必須です。" }),
+  totalScore: z.number().min(0, { message: "合計点数は0以上です。" }),
+  specificityScore: z.number().min(0, { message: "具体性は0以上です。" }),
+  logicScore: z.number().min(0, { message: "論理性は0以上です。" }),
+  starStructureScore: z.number().min(0, { message: "STAR形式構造は0以上です。" }),
+  companyFitScore: z.number().min(0, { message: "企業適合性は0以上です。" }),
+  growthScore: z.number().min(0, { message: "成長性は0以上です。" }),
   feedback: z.string().min(1, { message: "フィードバックは必須です。" }),
 });

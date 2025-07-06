@@ -14,7 +14,7 @@ const RecordAnswerSection = dynamic(() => import('./_components/RecordAnswerSect
 
 type InterviewFromApi = InferResponseType<(typeof client.api.interview)["$get"], 200>[number];
 
-type Question = { question: string; answer: string }
+type Question = { category: string; question: string; answer: string }
 
 type Interview = {
   interviewId: string

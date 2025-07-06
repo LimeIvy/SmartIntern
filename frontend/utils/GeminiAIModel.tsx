@@ -43,12 +43,13 @@ export async function ResearchCompany(prompt: string) {
   return result;
 }
 
-export async function GeminiAIModel(prompt: string): Promise<string> {
+export async function GeminiAIModel(prompt: string, temperature: number): Promise<string> {
   const ai = new GoogleGenAI({
     apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
   });
   const config = {
     responseMimeType: 'text/plain',
+    temperature: temperature,
   };
   const model = 'gemini-2.0-flash-lite';
 
