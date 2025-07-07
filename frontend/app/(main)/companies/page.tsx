@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue } from "jotai";
 import { companiesAtom } from "@/store/companies";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,10 +63,14 @@ const CompanyCardSkeleton = () => (
 const CompaniesList = () => {
   const companiesData = useAtomValue(companiesAtom);
   const companies = companiesData.data ?? [];
-  const dispatch = useSetAtom(companiesAtom);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("すべて");
   const selectionFilter = useAtomValue(selectionFilterAtom);
+
+  console.log("[CompaniesList] companiesData:", companiesData);
+  console.log("[CompaniesList] companies:", companies);
+  console.log("[CompaniesList] isPending:", companiesData.isPending);
+  console.log("[CompaniesList] error:", companiesData.error);
 
   const filterOptions = ["すべて", "選考中", "内定", "お祈り"];
 
@@ -78,8 +82,7 @@ const CompaniesList = () => {
       ...company,
       selections: company.selections.filter(selection => selection.type === selectionFilter),
     };
-  }).filter(company => company.selections.length > 0)
-  .filter((company) => {
+  }).filter((company) => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (filterStatus === "すべて") return matchesSearch;
 
@@ -138,7 +141,8 @@ const CompaniesList = () => {
       await client.api.company[":id"].$delete({
         param: { id: companyId },
       });
-      (dispatch as (update: { type: 'refetch' }) => void)({ type: 'refetch' });
+      console.log("[CompaniesList] handleDelete - refetch呼び出し");
+      companiesData.refetch();
     } catch (err) {
       console.error(err instanceof Error ? err.message : "企業の削除に失敗しました。");
     }
@@ -255,7 +259,7 @@ const CompaniesList = () => {
                               {translateStatus(selection.status)}
                             </Badge>
                           </div>
-        
+
                           {selection.schedules.length > 0 ? (
                             <div className="space-y-1 pl-4">
                               {selection.schedules.map((schedule, sIndex) => (
@@ -275,7 +279,7 @@ const CompaniesList = () => {
                                         {schedule.location && (
                                           <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                             <MapPin className="h-4 w-4" />
-                                              <span>{schedule.location}</span>
+                                            <span>{schedule.location}</span>
                                           </div>
                                         )}
                                         {schedule.url && (
@@ -362,7 +366,12 @@ const CompaniesList = () => {
             : "最初の企業を登録して就活管理を始めましょう"}
         </p>
         {!searchQuery && filterStatus === "すべて" && (
-          <AddCompany />
+          <AddCompany onCompanyAdded={() => {
+            console.log("[CompaniesList] AddCompany onCompanyAdded呼び出し");
+            console.log("[CompaniesList] companiesData.refetch:", companiesData.refetch);
+            companiesData.refetch();
+            console.log("[CompaniesList] refetch完了");
+          }} />
         )}
       </div>
     );
@@ -375,7 +384,9 @@ const CompaniesList = () => {
           <div>
             <h2 className="mb-2 text-3xl font-bold text-gray-900">企業一覧</h2>
           </div>
-          <AddCompany />
+          <AddCompany onCompanyAdded={() => {
+            companiesData.refetch();
+          }} />
         </div>
 
         <div className="mb-6 flex gap-4">
@@ -421,4 +432,3 @@ const CompaniesList = () => {
 export default function CompaniesPage() {
   return <CompaniesList />
 }
-

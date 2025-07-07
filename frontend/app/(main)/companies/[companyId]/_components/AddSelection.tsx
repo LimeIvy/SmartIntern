@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, Plus } from "lucide-react";
 import { useState } from "react";
-import { addSelectionSchema } from "@/schemas/add_schema";
+import { addSelectionSchema } from "@/schemas/form_schema";
 import { useParams } from "next/navigation";
 import { client } from "@/lib/hono";
 import type { Status, SelectionType } from "@prisma/client";

@@ -2,15 +2,17 @@ import { Hono } from "hono";
 import db from "@/lib/prisma";
 import { zValidator } from "@hono/zod-validator";
 import { checkUser } from "@/lib/checkUser";
-import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/add_schema";
+import { addCompanySchema, addSelectionSchema, addScheduleSchema } from "@/schemas/form_schema";
 import { z } from "zod";
 import { Status } from "@prisma/client";
 
 const app = new Hono()
   // 企業一覧取得
   .get("/", async (c) => {
+    console.log("[API] GET /company - 開始");
     const user = await checkUser();
     if (!user) {
+      console.log("[API] GET /company - 未認証");
       return c.json({ error: "Unauthorized" }, 401);
     }
 
@@ -30,6 +32,8 @@ const app = new Hono()
       },
     });
 
+    console.log("[API] GET /company - 取得した企業数:", companies.length);
+    console.log("[API] GET /company - ユーザーID:", user.id);
     return c.json(companies);
   })
 

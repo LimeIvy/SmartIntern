@@ -23,6 +23,7 @@ model User {
   companies Company[]
   stories Story[]
   esStocks EsStock[]
+  Interview Interview[]
 }
 
 
@@ -155,4 +156,35 @@ enum Status {
   FINAL       // 最終面接
   OFFERED     // 内定
   REJECTED    // お祈り
+}
+
+model Interview {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  companyURL String
+  companyResearch String
+  UserES String
+  Question String @default("")
+  createdAt DateTime @default(now())
+  InterviewAnswer InterviewAnswer[]
+}
+
+model InterviewAnswer {
+  id        String   @id @default(cuid())
+  interviewId String
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  category String @default("自己紹介")
+  question String
+  answer String
+  totalScore Int
+  specificityScore Int
+  logicScore Int
+  starStructureScore Int
+  companyFitScore Int
+  growthScore Int
+  feedback String
+  followUpQuestion String?
+  createdAt DateTime @default(now())
 }
