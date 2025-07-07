@@ -19,21 +19,22 @@ const RecordAnswerSection = ({ setUserAnswer, isLoading }: {
   });
 
   useEffect(() => {
-    results.forEach((result) => {
-      if (typeof result === 'string') {
-        setUserAnswer(prevAnswer => prevAnswer + result);
-      } else if ('transcript' in result) {
-        setUserAnswer(prevAnswer => prevAnswer + result.transcript);
+    if (results.length > 0) {
+      const last = results[results.length - 1];
+      if (last !== undefined) {
+        if (typeof last === 'string' && last.trim() !== "") {
+          setUserAnswer(last);
+        } else if (typeof last === 'object' && 'transcript' in last && typeof last.transcript === 'string' && last.transcript.trim() !== "") {
+          setUserAnswer(last.transcript);
+        }
       }
-    });
-    console.log("userAnswer", results);
+    }
   }, [results, setUserAnswer]);
 
   const StartStopRecording = () => {
     if (isRecording) {
       stopSpeechToText();
     } else {
-      setUserAnswer("");
       startSpeechToText();
     }
   };

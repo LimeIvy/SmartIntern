@@ -38,6 +38,7 @@ export const addInterviewSchema = z.object({
 
 export const addInterviewAnswerSchema = z.object({
   interviewId: z.string().min(1, { message: "面接IDは必須です。" }),
+  category: z.string().min(1, { message: "カテゴリは必須です。" }),
   question: z.string().min(1, { message: "質問は必須です。" }),
   answer: z.string().min(1, { message: "回答は必須です。" }),
   totalScore: z.number().min(0, { message: "合計点数は0以上です。" }),

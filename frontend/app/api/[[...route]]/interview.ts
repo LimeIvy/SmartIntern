@@ -78,6 +78,7 @@ const app = new Hono()
     const interviewAnswer = await db.interviewAnswer.create({
       data: {
         interviewId: data.interviewId,
+        category: data.category,
         question: data.question,
         answer: data.answer,
         totalScore: data.totalScore,
@@ -87,6 +88,7 @@ const app = new Hono()
         companyFitScore: data.companyFitScore,
         growthScore: data.growthScore,
         feedback: data.feedback,
+        followUpQuestion: data.followUpQuestion,
         createdAt: new Date(),
         },
       });
@@ -106,7 +108,7 @@ const app = new Hono()
     // すべての回答を取得
     const allAnswers = await db.interviewAnswer.findMany({
       where: { interviewId: interviewId },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
     console.log("allAnswers", allAnswers);
     type InterviewAnswer = typeof allAnswers[number];

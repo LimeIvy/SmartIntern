@@ -175,6 +175,7 @@ model InterviewAnswer {
   id        String   @id @default(cuid())
   interviewId String
   interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  category String @default("自己紹介")
   question String
   answer String
   totalScore Int
