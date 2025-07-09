@@ -34,7 +34,7 @@ export const checkUser = async () => {
     const newUser = await db?.user.create({
       data: {
         clerkUserId: user.id,
-        name: user.username || user.fullName,
+        name: user.username || "",
         imageUrl: user.imageUrl,
         email: user.emailAddresses[0]?.emailAddress || "",
       },
