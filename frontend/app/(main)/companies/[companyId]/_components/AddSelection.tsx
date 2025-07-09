@@ -65,14 +65,19 @@ export default function AddSelection({ onSelectionAdded }: AddSelectionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState<SelectionFormData>(INITIAL_STATE);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     setError(null);
     const result = addSelectionSchema.safeParse(formData);
     if (!result.success) {
       const nameError = result.error.issues.find(issue => issue.path[0] === "name")?.message;
       setError(nameError ?? null);
+      setIsSubmitting(false);
       return;
     }
 
@@ -95,6 +100,8 @@ export default function AddSelection({ onSelectionAdded }: AddSelectionProps) {
       setFormData(INITIAL_STATE);
     } catch (err) {
       setError(err instanceof Error ? err.message : "不明なエラーが発生しました。");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -182,9 +189,11 @@ export default function AddSelection({ onSelectionAdded }: AddSelectionProps) {
           <DialogFooter>
             <div className="mt-3 flex gap-5">
               <DialogClose asChild>
-                <Button type="button" variant="outline">キャンセル</Button>
+                <Button type="button" variant="outline" disabled={isSubmitting}>キャンセル</Button>
               </DialogClose>
-              <Button type="submit">保存</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "保存中..." : "保存"}
+              </Button>
             </div>
           </DialogFooter>
         </form>
