@@ -466,12 +466,14 @@ export const jaJP: LocalizationResource = {
     continue: {
       actionLink: "サインイン",
       actionText: "アカウントをお持ちですか？",
-      title: "名前を入力してください",
+      subtitle: "{{applicationName}}へのアクセスを続ける",
+      title: "未入力のフィールドを入力",
     },
     emailCode: {
       formSubtitle: "メールアドレスに送信された確認コードを入力してください",
       formTitle: "確認コード",
       resendButton: "コードを再送信",
+      subtitle: "{{applicationName}}へのアクセスを続ける",
       title: "メールアドレスを確認",
     },
     emailLink: {
@@ -485,6 +487,7 @@ export const jaJP: LocalizationResource = {
         title: "登録中...",
       },
       resendButton: "リンクを再送信",
+      subtitle: "{{applicationName}}へのアクセスを続ける",
       title: "メールアドレスを確認",
       verified: {
         title: "登録が完了しました",
@@ -510,6 +513,7 @@ export const jaJP: LocalizationResource = {
       formSubtitle: "電話番号に送信された確認コードを入力してください",
       formTitle: "確認コード",
       resendButton: "コードを再送信",
+      subtitle: "{{applicationName}}へのアクセスを続ける",
       title: "電話番号を確認",
     },
     restrictedAccess: {

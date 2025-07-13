@@ -18,7 +18,6 @@ import Link from "next/link";
 import { Status } from "@prisma/client";
 import { useRouter } from 'next/navigation';
 import { selectionFilterAtom } from "@/store/filter-atom";
-import dayjs from "dayjs";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -91,12 +90,13 @@ export default function Dashboard() {
     url?: string;
     note?: string;
   }[] = [];
-  const now = dayjs().startOf('day');
+  const now = new Date();
   filteredCompanies.forEach((company) => {
     company.selections?.forEach((selection) => {
       selection.schedules?.forEach((schedule) => {
         if (!schedule.endDate) return;
-        const diff = dayjs(schedule.endDate).startOf('day').diff(now, 'day');
+        const end = new Date(schedule.endDate);
+        const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (diff >= 0 && diff <= 7) {
           upcomingTasks.push({
             companyId: company.id,

@@ -94,11 +94,11 @@ export default function Sidebar() {
             <DropdownMenuTrigger asChild>
               <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
                 <Avatar className="h-8 w-8">
-                  {user?.imageUrl && <AvatarImage src={user.imageUrl} />}
-                  <AvatarFallback>{user?.username ?? ""}</AvatarFallback>
+                  <AvatarImage src={user?.imageUrl ?? ""} />
+                  <AvatarFallback>{user?.fullName ?? ""}</AvatarFallback>
                 </Avatar>
                 <div className="text-left">
-                  <div className="text-sm font-medium">{user?.username ?? ""}</div>
+                  <div className="text-sm font-medium">{user?.fullName ?? ""}</div>
                 </div>
               </button>
             </DropdownMenuTrigger>
@@ -108,12 +108,8 @@ export default function Sidebar() {
                 プロフィール
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <SignOutButton>
-                  <div className="flex items-center gap-3 cursor-pointer text-gray-600 hover:text-gray-900 transition-colors">
-                    <LogOut className="h-5 w-5" />
-                    <span className="font-semibold">ログアウト</span>
-                  </div>
-                </SignOutButton>
+                <LogOut className="mr-2 h-4 w-4" />
+                ログアウト
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -176,11 +172,11 @@ export default function Sidebar() {
                 <DropdownMenuTrigger asChild>
                   <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
                     <Avatar className="h-8 w-8">
-                      {user?.imageUrl && <AvatarImage src={user.imageUrl} />}
-                      <AvatarFallback>{user?.username ?? ""}</AvatarFallback>
+                      <AvatarImage src={user?.imageUrl ?? ""} />
+                      <AvatarFallback>{user?.fullName ?? ""}</AvatarFallback>
                     </Avatar>
                     <div className="text-left">
-                      <div className="text-sm font-medium">{user?.username ?? ""}</div>
+                      <div className="text-sm font-medium">{user?.fullName ?? ""}</div>
                     </div>
                   </button>
                 </DropdownMenuTrigger>
@@ -191,10 +187,8 @@ export default function Sidebar() {
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <SignOutButton>
-                        <div className="flex items-center gap-3 cursor-pointer text-gray-600 hover:text-gray-900 transition-colors">
-                          <LogOut className="h-5 w-5" />
-                          <span className="font-semibold">ログアウト</span>
-                        </div>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        ログアウト
                     </SignOutButton>
                   </DropdownMenuItem>
                 </DropdownMenuContent>

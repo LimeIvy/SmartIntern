@@ -188,12 +188,6 @@ function Calendar() {
             }
           }}
           buttonText={{
-            today: '今日',
-            month: '月',
-            week: '週',
-            day: '日',
-            prev: '<',
-            next: '>',
             listWeekFromToday: '週'
           }}
           locales={[jaLocale]}
