@@ -32,7 +32,7 @@ export default function Sidebar() {
     { id: "kanban", label: "カンバン", icon: Kanban },
     { id: "calendar", label: "カレンダー", icon: Calendar },
     { id: "companies", label: "企業一覧", icon: Building2 },
-    { id: "ES", label: "ES置き場", icon: FileText },
+    { id: "es", label: "ES置き場", icon: FileText },
     { id: "interview", label: "AI面接", icon: Mic },
   ];
 
