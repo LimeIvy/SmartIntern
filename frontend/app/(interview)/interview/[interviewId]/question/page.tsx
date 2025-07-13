@@ -97,7 +97,7 @@ STAR形式構造 (${config.weightings.starStructure}点): Situation, Task, Actio
 出力フォーマット
 必ず以下のJSON形式で回答すること。
 
-**評価に関わらず、必ず1つ質問内容を深掘るfollowUpQuestionsを生成し、followUpQuestionsキーに追加すること。**
+**評価に関わらず、必ず1つ質問内容を深掘る簡単なfollowUpQuestionsを生成し、followUpQuestionsキーに追加すること。**
 
 {
   "evaluation": "SUFFICIENT" | "INSUFFICIENT",
