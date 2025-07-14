@@ -103,9 +103,10 @@ model Story {
   action    String  // (A) 具体的にとった行動
   result    String  // (R) 行動によって得られた結果・学び
 
-  // 自由記述
+  // 自由記述 
   learned   String?  // この経験から得た学びやスキルのメモ
-
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   // リレーション
   esStocks  EsStock[]
 }
@@ -117,6 +118,8 @@ model EsStock {
 
   title     String   // 文章のタイトル (例:「リーダー経験」)
   content   String   // 文章の本文
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // リレーション
   baseStoryId String?  // どのStoryを元にしたか (任意)

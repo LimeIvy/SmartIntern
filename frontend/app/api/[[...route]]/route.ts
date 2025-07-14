@@ -3,9 +3,10 @@ import { handle } from "hono/vercel";
 
 import company from "./company";
 import interview from "./interview";
+import es from './es'
 
 const app = new Hono().basePath("/api");
-const route = app.route("/company", company).route("/interview", interview);
+const route = app.route('/company', company).route('/interview', interview).route('/es', es)
 
 export type AppType = typeof route;
 
