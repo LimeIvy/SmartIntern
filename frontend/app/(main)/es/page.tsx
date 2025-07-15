@@ -45,9 +45,6 @@ import { PlusIcon, Trash2 } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { v4 as uuidv4 } from 'uuid'
 
-
-// --- Mock Data and Types ---
-// NOTE: These types are simplified and do not include all fields from Prisma schema.
 type Story = {
   id: string
   title: string
@@ -89,8 +86,6 @@ const mockEsStocks: EsStock[] = [
     baseStory: { title: '大学祭実行委員でのリーダー経験' },
   },
 ]
-// --- End of Mock Data ---
-
 
 const storySchema = z.object({
   title: z.string().min(1, 'タイトルは必須です。'),
