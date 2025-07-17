@@ -1,4 +1,4 @@
-import { SignInButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignedIn, SignedOut, SignOutButton } from "@clerk/nextjs";
 import { checkUser } from "@/lib/checkUser";
 import React from "react";
 import { Kanban } from "lucide-react";
@@ -25,6 +25,9 @@ const header = async () => {
                 </SignInButton>
               </SignedOut>
               <SignedIn>
+                <SignOutButton>
+                  <Button className="bg-blue-600 hover:bg-blue-700">ログアウト</Button>
+                </SignOutButton>
                 <Link href="/dashboard">
                   <Button className="bg-blue-600 hover:bg-blue-700">ダッシュボードへ</Button>
                 </Link>
